@@ -7,7 +7,19 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateDatabase(user, password string) (*gorm.DB, error) {
+type Dao struct {
+	db *gorm.DB
+}
+
+func NewDao(user, password string) (Dao, error) {
+	var dao Dao
+	// connect using gorm
 	dsn := fmt.Sprintf("host=localhost user=%s password=%s dbname=capi port=5432", user, password)
-	return gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{}); err != nil {
+		return dao, err
+	} else {
+		dao = Dao{db}
+	}
+
+	return dao, nil
 }
