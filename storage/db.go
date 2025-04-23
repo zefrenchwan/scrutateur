@@ -7,10 +7,12 @@ import (
 	"gorm.io/gorm"
 )
 
+// Dao decorates GORM
 type Dao struct {
 	db *gorm.DB
 }
 
+// NewDao returns a new dao for that db user and password
 func NewDao(user, password string) (Dao, error) {
 	var dao Dao
 	// connect using gorm
@@ -22,4 +24,10 @@ func NewDao(user, password string) (Dao, error) {
 	}
 
 	return dao, nil
+}
+
+// ValidateUser returns true if login and password are a valid user auth info
+func (d Dao) ValidateUser(login, password string) (bool, error) {
+	// Open bar for now, will change
+	return true, nil
 }
