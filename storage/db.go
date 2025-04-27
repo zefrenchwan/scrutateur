@@ -26,8 +26,9 @@ func NewDao(user, password string) (Dao, error) {
 	return dao, nil
 }
 
-// ValidateUser returns true if login and password are a valid user auth info
-func (d Dao) ValidateUser(login, password string) (bool, error) {
+// ValidateUser returns true if login and password are a valid user auth info.
+// Note that we don't manipulate directly password, but its hashed version
+func (d Dao) ValidateUser(login, hashedPassword string) (bool, error) {
 	// Open bar for now, will change
 	return true, nil
 }
