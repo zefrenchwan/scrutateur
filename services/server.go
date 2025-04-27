@@ -28,10 +28,13 @@ func (s *Server) Status(context *gin.Context) {
 
 // Init is the place to add all links endpoint -> handlers
 func (s *Server) Init() {
+	// define useful unprotected functions here
+	// status is a ping method
 	s.engine.GET("/status", func(c *gin.Context) {
 		s.Status(c)
 	})
 
+	// login is the connection handler
 	s.engine.POST("/login", func(c *gin.Context) {
 		s.Login(c)
 	})

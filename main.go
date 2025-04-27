@@ -14,6 +14,8 @@ func main() {
 		dao = db
 	}
 
+	defer dao.Close()
+
 	// define web serving and links
 	engine := services.NewServer(dao)
 	engine.Init()

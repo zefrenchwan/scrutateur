@@ -1,7 +1,6 @@
 package services
 
 import (
-	"crypto/sha256"
 	"fmt"
 	"net/http"
 	"strings"
@@ -10,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/zefrenchwan/scrutateur.git/storage"
 )
 
 func NewSecret() string {
@@ -34,30 +34,28 @@ func (s *Server) Login(context *gin.Context) {
 		return
 	}
 
-	// don't keep the password, keep its hash
-	// Clean auth as soon as possible
-	hash := sha256.New()
-	hash.Write([]byte(auth.Password))
-	hashedPassword := string(hash.Sum(nil))
-	userLogin := auth.Login
-	auth = UserAuth{}
-
 	// validate user auth
-	if valid, err := s.dao.ValidateUser(userLogin, hashedPassword); err != nil {
+	if valid, err := s.dao.ValidateUser(auth.Login, auth.Password); err != nil {
+		fmt.Println(err)
 		context.String(http.StatusInternalServerError, "Internal error")
+		return
 	} else if !valid {
 		context.String(http.StatusUnauthorized, "Authentication failure")
+		return
 	}
 
-	if newToken, err := CreateToken(userLogin, s.secret, s.tokenDuration); err == nil {
-		context.Writer.Header().Add("Authorization", "Bearer "+newToken)
-	} else {
+	var newToken string
+	if token, err := CreateToken(auth.Login, s.secret, s.tokenDuration); err != nil {
 		fmt.Println(err)
 		context.String(http.StatusInternalServerError, "Cannot generate token for user")
+		return
+	} else {
+		newToken = token
 	}
 
 	// user auth is valid
-	context.JSON(http.StatusAccepted, "Hello "+userLogin)
+	context.Writer.Header().Add("Authorization", "Bearer "+newToken)
+	context.JSON(http.StatusAccepted, "Hello "+auth.Login)
 }
 
 // CreateToken creates a string token for a given user, based on a secret.
@@ -78,46 +76,64 @@ func CreateToken(username, secret string, delay time.Duration) (string, error) {
 	return tokenString, nil
 }
 
-// VerifyToken uses the secret to check for a token
-func VerifyToken(secret string, tokenString string) error {
+// VerifyToken uses the secret to check for a token and returns either login,nil or "", and error for invalid token
+func VerifyToken(secret string, tokenString string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
 		return secret, nil
 	})
 
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if !token.Valid {
-		return fmt.Errorf("invalid token")
+		return "", fmt.Errorf("invalid token")
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		fmt.Println(claims["foo"], claims["nbf"])
+		user := claims["username"]
+		return user.(string), nil
 	} else {
-		fmt.Println(err)
+		return "", fmt.Errorf("unsupported claim type for JWT token")
 	}
-
-	return nil
 }
 
-// ProtectedHandler deals with
-// func ProtectedHandler(w http.ResponseWriter, r *http.Request) {
-// 	w.Header().Set("Content-Type", "application/json")
-// 	tokenString := r.Header.Get("Authorization")
-// 	if tokenString == "" {
-// 		w.WriteHeader(http.StatusUnauthorized)
-// 		fmt.Fprint(w, "Missing authorization header")
-// 		return
-// 	}
+func ProtectedMiddlewareBuilder(secret string, dao storage.Dao) gin.HandlerFunc {
 
-// 	tokenString = tokenString[len("Bearer "):]
-// 	if err := VerifyToken(tokenString); err != nil {
-// 		w.WriteHeader(http.StatusUnauthorized)
-// 		fmt.Fprint(w, "Invalid token")
-// 		return
-// 	}
+	return func(c *gin.Context) {
+		// get the bearer and token as a whole reading the header
+		tokenString := c.Request.Header.Get("Authorization")
+		if tokenString == "" {
+			c.String(http.StatusUnauthorized, "Missing authorization header")
+			return
+		}
 
-// 	fmt.Fprint(w, "Welcome to the the protected area")
+		// get rid of "Bearer " to get only the token
+		tokenString = tokenString[len("Bearer "):]
 
-// }
+		// Either token is valid and we know the user, or we stop right here
+		var username string
+		if user, err := VerifyToken(secret, tokenString); err != nil {
+			c.String(http.StatusUnauthorized, "Invalid token")
+			return
+		} else {
+			username = user
+		}
+
+		// TOKEN IS VALID AND USER IS KNOWN
+		//dao.UserContent(username)
+		_ = username
+
+		// Set token for security
+		// Source: https://gin-gonic.com/en/docs/examples/security-headers/
+		c.Header("X-Frame-Options", "DENY")
+		c.Header("Content-Security-Policy", "default-src 'self'; connect-src *; font-src *; script-src-elem * 'unsafe-inline'; img-src * data:; style-src * 'unsafe-inline';")
+		c.Header("X-XSS-Protection", "1; mode=block")
+		c.Header("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload")
+		c.Header("Referrer-Policy", "strict-origin")
+		c.Header("X-Content-Type-Options", "nosniff")
+		c.Header("Permissions-Policy", "geolocation=(),midi=(),sync-xhr=(),microphone=(),camera=(),magnetometer=(),gyroscope=(),fullscreen=(self),payment=()")
+
+		c.Next()
+	}
+}
