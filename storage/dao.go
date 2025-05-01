@@ -1,6 +1,8 @@
 package storage
 
-import "context"
+import (
+	"context"
+)
 
 // Dao decorates any storage system (relational, cache, etc)
 type Dao struct {
@@ -30,4 +32,9 @@ func (d *Dao) Close() {
 // ValidateUser returns true if login and password are a valid user auth info.
 func (d *Dao) ValidateUser(ctx context.Context, login string, password string) (bool, error) {
 	return d.rdb.ValidateUser(ctx, login, password)
+}
+
+// SetSessionForUser registers a session
+func (d *Dao) SetSessionForUser(context context.Context, sessionId string, session []byte) error {
+	return d.cache.SetSessionForUser(context, sessionId, session)
 }

@@ -57,7 +57,15 @@ func (s *Server) Login(c *gin.Context) {
 
 	// set cookie value if not set
 	newSessionId := NewSecret()
+	session := NewSessionForUser(auth.Login)
 	c.SetCookie(s.cookieName, newSessionId, -1, "/", "", false, true)
+	if value, err := session.Serialize(); err != nil {
+		fmt.Println(err)
+		c.String(http.StatusInternalServerError, "Cannot save session")
+	} else if err := s.dao.SetSessionForUser(context.Background(), newSessionId, value); err != nil {
+		fmt.Println(err)
+		c.String(http.StatusInternalServerError, "Cannot store session")
+	}
 
 	// user auth is valid
 	c.Writer.Header().Add("Authorization", "Bearer "+newToken)
