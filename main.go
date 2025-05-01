@@ -8,7 +8,7 @@ import (
 func main() {
 	// Create DAO
 	var dao storage.Dao
-	if db, err := storage.NewDao("postgres", "popo"); err != nil {
+	if db, err := storage.NewDao("postgres", "popo", "timmy"); err != nil {
 		panic(err)
 	} else {
 		dao = db

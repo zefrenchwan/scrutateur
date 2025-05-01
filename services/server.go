@@ -10,15 +10,27 @@ import (
 
 // Server encapsulates app server toolbox (dao) and decorates a gin server
 type Server struct {
-	secret        string
+	// secret to deal with auth
+	secret string
+	// tokenDuration is defaulted to 24h
 	tokenDuration time.Duration
-	dao           storage.Dao
-	engine        *gin.Engine
+	// dao allows any database operation
+	dao storage.Dao
+	// engine is the technical solution to implement server logic (gin in this case)
+	engine *gin.Engine
+	// cookieName is the name of the cookie to look for
+	cookieName string
 }
 
 // NewServer makes a new app server with a given dao
 func NewServer(dao storage.Dao) Server {
-	return Server{dao: dao, engine: gin.New(), secret: NewSecret(), tokenDuration: time.Hour * 24}
+	return Server{
+		dao:           dao,
+		engine:        gin.New(),
+		secret:        NewSecret(),
+		tokenDuration: time.Hour * 24,
+		cookieName:    "app.cookie.scrutateur",
+	}
 }
 
 // Status is a ping handler

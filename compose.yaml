@@ -9,3 +9,11 @@ services:
       - POSTGRES_PASSWORD=popo
       - POSTGRES_USER=postgres
       - POSTGRES_DB=capi
+  redis:
+    image: redis
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server --loglevel warning --requirepass ${REDIS_PASSWORD}
+    environment:
+      - REDIS_PASSWORD=timmy

@@ -43,11 +43,15 @@ create table auth.roles (
     role_name text not null unique,
     role_description text not null,
     created_at timestamp with time zone not null default now(),
-    updated_at  timestamp with time zone not null default now(),
-    deleted_at  timestamp with time zone not null default null
+    updated_at  timestamp with time zone not null default now()
 );
 
---insert into auth.roles(role_name, role_description) values('','');
+create or replace procedure auth.insert_role(p_role_name text, p_role_description text) language plpgsql as $$
+declare 
+begin 
+    insert into auth.roles(role_name, role_description) values(p_role_name, p_role_description)
+    on conflict (role_name) do update set role_description = p_role_description, updated_at = now();
+end;$$;
 
 -- link user to role 
 create table auth.user_role (

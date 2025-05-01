@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"github.com/zefrenchwan/scrutateur.git/storage"
 )
 
+// NewSecret builds a new secret
 func NewSecret() string {
 	base := uuid.NewString() + uuid.NewString()
 	return strings.ReplaceAll(base, "-", "")
@@ -22,40 +24,44 @@ func NewSecret() string {
 // for the JWT token management
 
 // Login tests a POST content (username, password) and validates an user
-func (s *Server) Login(context *gin.Context) {
+func (s *Server) Login(c *gin.Context) {
 	// used once, defining the user connection
 	type UserAuth struct {
 		Login    string `form:"login" binding:"required"`
 		Password string `form:"password" binding:"required"`
 	}
 	var auth UserAuth
-	if err := context.BindJSON(&auth); err != nil {
-		context.String(http.StatusBadRequest, "expecting login and password")
+	if err := c.BindJSON(&auth); err != nil {
+		c.String(http.StatusBadRequest, "expecting login and password")
 		return
 	}
 
 	// validate user auth
-	if valid, err := s.dao.ValidateUser(auth.Login, auth.Password); err != nil {
+	if valid, err := s.dao.ValidateUser(context.Background(), auth.Login, auth.Password); err != nil {
 		fmt.Println(err)
-		context.String(http.StatusInternalServerError, "Internal error")
+		c.String(http.StatusInternalServerError, "Internal error")
 		return
 	} else if !valid {
-		context.String(http.StatusUnauthorized, "Authentication failure")
+		c.String(http.StatusUnauthorized, "Authentication failure")
 		return
 	}
 
 	var newToken string
 	if token, err := CreateToken(auth.Login, s.secret, s.tokenDuration); err != nil {
 		fmt.Println(err)
-		context.String(http.StatusInternalServerError, "Cannot generate token for user")
+		c.String(http.StatusInternalServerError, "Cannot generate token for user")
 		return
 	} else {
 		newToken = token
 	}
 
+	// set cookie value if not set
+	newSessionId := NewSecret()
+	c.SetCookie(s.cookieName, newSessionId, -1, "/", "", false, true)
+
 	// user auth is valid
-	context.Writer.Header().Add("Authorization", "Bearer "+newToken)
-	context.JSON(http.StatusAccepted, "Hello "+auth.Login)
+	c.Writer.Header().Add("Authorization", "Bearer "+newToken)
+	c.JSON(http.StatusAccepted, "Hello "+auth.Login)
 }
 
 // CreateToken creates a string token for a given user, based on a secret.
@@ -98,7 +104,8 @@ func VerifyToken(secret string, tokenString string) (string, error) {
 	}
 }
 
-func ProtectedMiddlewareBuilder(secret string, dao storage.Dao) gin.HandlerFunc {
+// AuthenticationMiddleware builds a middleware to deal with auth
+func AuthenticationMiddleware(secret string, dao storage.Dao) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		// get the bearer and token as a whole reading the header
@@ -112,17 +119,12 @@ func ProtectedMiddlewareBuilder(secret string, dao storage.Dao) gin.HandlerFunc 
 		tokenString = tokenString[len("Bearer "):]
 
 		// Either token is valid and we know the user, or we stop right here
-		var username string
-		if user, err := VerifyToken(secret, tokenString); err != nil {
+		if _, err := VerifyToken(secret, tokenString); err != nil {
 			c.String(http.StatusUnauthorized, "Invalid token")
 			return
-		} else {
-			username = user
 		}
 
 		// TOKEN IS VALID AND USER IS KNOWN
-		//dao.UserContent(username)
-		_ = username
 
 		// Set token for security
 		// Source: https://gin-gonic.com/en/docs/examples/security-headers/
