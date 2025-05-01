@@ -54,10 +54,9 @@ func (s *Server) Login(c *gin.Context) {
 		newToken = token
 	}
 
-	// set cookie value if not set
+	// set session id value
 	newSessionId := NewSecret()
 	session := NewSessionForUser(auth.Login)
-	c.SetCookie(s.cookieName, newSessionId, -1, "/", "", false, true)
 	if value, err := session.Serialize(); err != nil {
 		fmt.Println(err)
 		c.String(http.StatusInternalServerError, "Cannot save session")
@@ -67,6 +66,9 @@ func (s *Server) Login(c *gin.Context) {
 		c.String(http.StatusInternalServerError, "Cannot store session")
 		return
 	}
+
+	// session creation went fine, so
+	c.Header("session-id", newSessionId)
 
 	// user auth is valid
 	c.Writer.Header().Add("Authorization", "Bearer "+newToken)
@@ -138,24 +140,19 @@ func (s *Server) AuthenticationMiddleware() gin.HandlerFunc {
 
 		// TOKEN IS VALID AND USER IS KNOWN
 		// Now we want to check user session
-		if cookie, err := c.Request.Cookie(s.cookieName); err != nil {
-			c.String(http.StatusBadRequest, "No session for that user")
+		value := c.Request.Header.Get("session-id")
+		// check that session id fits that user
+		if b, err := s.dao.GetSessionForUser(context.Background(), value); err != nil {
+			fmt.Println(err)
+			c.String(http.StatusInternalServerError, "Session loading failure")
 			return
-		} else {
-			value := cookie.Value
-			// check that session id fits that user
-			if b, err := s.dao.GetSessionForUser(context.Background(), value); err != nil {
-				fmt.Println(err)
-				c.String(http.StatusInternalServerError, "Session loading failure")
-				return
-			} else if session, err := SessionLoad(b); err != nil {
-				fmt.Println(err)
-				c.String(http.StatusInternalServerError, "Session loading failure")
-				return
-			} else if session.CurrentUser != username {
-				c.String(http.StatusUnauthorized, "Session mismatch")
-				return
-			}
+		} else if session, err := SessionLoad(b); err != nil {
+			fmt.Println(err)
+			c.String(http.StatusInternalServerError, "Session loading failure")
+			return
+		} else if session.CurrentUser != username {
+			c.String(http.StatusUnauthorized, "Session mismatch")
+			return
 		}
 
 		// All security tests passed
