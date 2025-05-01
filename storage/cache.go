@@ -33,8 +33,8 @@ func (c *CacheStorage) SetSessionForUser(context context.Context, sessionId stri
 	return nil
 }
 
+// GetSessionForUser loads session data based on its session id
 func (c *CacheStorage) GetSessionForUser(context context.Context, sessionId string) ([]byte, error) {
-
 	if result := c.client.Get(context, sessionId); result.Err() != nil {
 		return nil, result.Err()
 	} else {

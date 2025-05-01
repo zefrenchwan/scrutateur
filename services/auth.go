@@ -96,7 +96,7 @@ func CreateToken(username, secret string, delay time.Duration) (string, error) {
 // VerifyToken uses the secret to check for a token and returns either login,nil or "", and error for invalid token
 func VerifyToken(secret string, tokenString string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
-		return secret, nil
+		return []byte(secret), nil
 	})
 
 	if err != nil {
@@ -117,12 +117,12 @@ func VerifyToken(secret string, tokenString string) (string, error) {
 
 // AuthenticationMiddleware builds a middleware to deal with auth
 func (s *Server) AuthenticationMiddleware() gin.HandlerFunc {
-
+	// this function tests the token, test session and then sets main headers
 	return func(c *gin.Context) {
 		// get the bearer and token as a whole reading the header
 		tokenString := c.Request.Header.Get("Authorization")
 		if tokenString == "" {
-			c.String(http.StatusUnauthorized, "Missing authorization header")
+			c.AbortWithError(http.StatusUnauthorized, fmt.Errorf("missing authorization header"))
 			return
 		}
 
@@ -132,7 +132,7 @@ func (s *Server) AuthenticationMiddleware() gin.HandlerFunc {
 		var username string
 		// Either token is valid and we know the user, or we stop right here
 		if login, err := VerifyToken(s.secret, tokenString); err != nil {
-			c.String(http.StatusUnauthorized, "Invalid token")
+			c.AbortWithError(http.StatusUnauthorized, fmt.Errorf("invalid token: %s", err.Error()))
 			return
 		} else {
 			username = login
@@ -140,18 +140,16 @@ func (s *Server) AuthenticationMiddleware() gin.HandlerFunc {
 
 		// TOKEN IS VALID AND USER IS KNOWN
 		// Now we want to check user session
-		value := c.Request.Header.Get("session-id")
+		sessionId := c.Request.Header.Get("session-id")
 		// check that session id fits that user
-		if b, err := s.dao.GetSessionForUser(context.Background(), value); err != nil {
-			fmt.Println(err)
-			c.String(http.StatusInternalServerError, "Session loading failure")
+		if b, err := s.dao.GetSessionForUser(context.Background(), sessionId); err != nil {
+			c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("session loading failure: %s", err.Error()))
 			return
 		} else if session, err := SessionLoad(b); err != nil {
-			fmt.Println(err)
-			c.String(http.StatusInternalServerError, "Session loading failure")
+			c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("session loading failure: %s", err.Error()))
 			return
 		} else if session.CurrentUser != username {
-			c.String(http.StatusUnauthorized, "Session mismatch")
+			c.AbortWithError(http.StatusUnauthorized, fmt.Errorf("session mismatch"))
 			return
 		}
 
@@ -166,9 +164,9 @@ func (s *Server) AuthenticationMiddleware() gin.HandlerFunc {
 		c.Header("X-Content-Type-Options", "nosniff")
 		c.Header("Permissions-Policy", "geolocation=(),midi=(),sync-xhr=(),microphone=(),camera=(),magnetometer=(),gyroscope=(),fullscreen=(self),payment=()")
 
-		// add auth elements
+		// add auth and session
 		c.Header("Authorization", "Bearer "+tokenString)
-		// add session info
+		c.Header("session-id", sessionId)
 
 		c.Next()
 	}

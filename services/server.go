@@ -49,6 +49,7 @@ func (s *Server) Init() {
 		s.Login(c)
 	})
 
+	// Dummy handler to test the middleware
 	middleware := s.AuthenticationMiddleware()
 	s.engine.GET("/user/details", middleware, func(c *gin.Context) {
 		c.String(http.StatusAccepted, "Welcome")
