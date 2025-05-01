@@ -38,3 +38,8 @@ func (d *Dao) ValidateUser(ctx context.Context, login string, password string) (
 func (d *Dao) SetSessionForUser(context context.Context, sessionId string, session []byte) error {
 	return d.cache.SetSessionForUser(context, sessionId, session)
 }
+
+// GetSessionForUser gets a session by id
+func (d *Dao) GetSessionForUser(context context.Context, sessionId string) ([]byte, error) {
+	return d.cache.GetSessionForUser(context, sessionId)
+}

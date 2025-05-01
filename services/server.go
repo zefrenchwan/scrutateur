@@ -1,6 +1,7 @@
 package services
 
 import (
+	"net/http"
 	"strconv"
 	"time"
 
@@ -49,6 +50,11 @@ func (s *Server) Init() {
 	// login is the connection handler
 	s.engine.POST("/login", func(c *gin.Context) {
 		s.Login(c)
+	})
+
+	middleware := s.AuthenticationMiddleware()
+	s.engine.GET("/user/details", middleware, func(c *gin.Context) {
+		c.String(http.StatusAccepted, "Welcome")
 	})
 }
 

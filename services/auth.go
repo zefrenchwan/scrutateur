@@ -10,7 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/zefrenchwan/scrutateur.git/storage"
 )
 
 // NewSecret builds a new secret
@@ -62,9 +61,11 @@ func (s *Server) Login(c *gin.Context) {
 	if value, err := session.Serialize(); err != nil {
 		fmt.Println(err)
 		c.String(http.StatusInternalServerError, "Cannot save session")
+		return
 	} else if err := s.dao.SetSessionForUser(context.Background(), newSessionId, value); err != nil {
 		fmt.Println(err)
 		c.String(http.StatusInternalServerError, "Cannot store session")
+		return
 	}
 
 	// user auth is valid
@@ -113,7 +114,7 @@ func VerifyToken(secret string, tokenString string) (string, error) {
 }
 
 // AuthenticationMiddleware builds a middleware to deal with auth
-func AuthenticationMiddleware(secret string, dao storage.Dao) gin.HandlerFunc {
+func (s *Server) AuthenticationMiddleware() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		// get the bearer and token as a whole reading the header
@@ -126,14 +127,38 @@ func AuthenticationMiddleware(secret string, dao storage.Dao) gin.HandlerFunc {
 		// get rid of "Bearer " to get only the token
 		tokenString = tokenString[len("Bearer "):]
 
+		var username string
 		// Either token is valid and we know the user, or we stop right here
-		if _, err := VerifyToken(secret, tokenString); err != nil {
+		if login, err := VerifyToken(s.secret, tokenString); err != nil {
 			c.String(http.StatusUnauthorized, "Invalid token")
 			return
+		} else {
+			username = login
 		}
 
 		// TOKEN IS VALID AND USER IS KNOWN
+		// Now we want to check user session
+		if cookie, err := c.Request.Cookie(s.cookieName); err != nil {
+			c.String(http.StatusBadRequest, "No session for that user")
+			return
+		} else {
+			value := cookie.Value
+			// check that session id fits that user
+			if b, err := s.dao.GetSessionForUser(context.Background(), value); err != nil {
+				fmt.Println(err)
+				c.String(http.StatusInternalServerError, "Session loading failure")
+				return
+			} else if session, err := SessionLoad(b); err != nil {
+				fmt.Println(err)
+				c.String(http.StatusInternalServerError, "Session loading failure")
+				return
+			} else if session.CurrentUser != username {
+				c.String(http.StatusUnauthorized, "Session mismatch")
+				return
+			}
+		}
 
+		// All security tests passed
 		// Set token for security
 		// Source: https://gin-gonic.com/en/docs/examples/security-headers/
 		c.Header("X-Frame-Options", "DENY")
@@ -143,6 +168,10 @@ func AuthenticationMiddleware(secret string, dao storage.Dao) gin.HandlerFunc {
 		c.Header("Referrer-Policy", "strict-origin")
 		c.Header("X-Content-Type-Options", "nosniff")
 		c.Header("Permissions-Policy", "geolocation=(),midi=(),sync-xhr=(),microphone=(),camera=(),magnetometer=(),gyroscope=(),fullscreen=(self),payment=()")
+
+		// add auth elements
+		c.Header("Authorization", "Bearer "+tokenString)
+		// add session info
 
 		c.Next()
 	}
