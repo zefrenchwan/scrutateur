@@ -52,7 +52,7 @@ func (s *Server) Init() {
 
 	// Dummy handler to test the middleware
 	middleware := s.AuthenticationMiddleware()
-	s.engine.GET("/user/details", middleware, func(c *gin.Context) {
+	s.engine.GET("/user/whoami", middleware, func(c *gin.Context) {
 		var session Session
 		if s, err := s.SessionLoad(c); err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
@@ -60,7 +60,7 @@ func (s *Server) Init() {
 			session = s
 		}
 
-		c.String(http.StatusAccepted, "Welcome "+session.CurrentUser)
+		c.String(http.StatusAccepted, session.CurrentUser)
 	})
 }
 

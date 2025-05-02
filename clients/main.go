@@ -7,16 +7,15 @@ import (
 )
 
 func main() {
-	fmt.Println("Starting a connection")
 	session, errConnection := clients.Connect("root", "root")
 	if errConnection != nil {
 		panic(errConnection)
 	}
 
-	details, errDetails := session.GetUserDetails()
+	identity, errDetails := session.GetUsername()
 	if errDetails != nil {
 		panic(errDetails)
 	} else {
-		fmt.Println(details)
+		fmt.Println("Hello " + identity)
 	}
 }

@@ -58,7 +58,7 @@ func (c *ClientSession) callEndpoint(method, url string) (string, error) {
 	}
 }
 
-// GetUserDetails access server at that endpoint and returns this content
-func (c *ClientSession) GetUserDetails() (string, error) {
-	return c.callEndpoint("GET", CONNECTION_BASE+"user/details")
+// GetUsername access server at that endpoint and returns this content
+func (c *ClientSession) GetUsername() (string, error) {
+	return c.callEndpoint("GET", CONNECTION_BASE+"user/whoami")
 }
