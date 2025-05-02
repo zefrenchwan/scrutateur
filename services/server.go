@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"time"
@@ -52,7 +53,17 @@ func (s *Server) Init() {
 	// Dummy handler to test the middleware
 	middleware := s.AuthenticationMiddleware()
 	s.engine.GET("/user/details", middleware, func(c *gin.Context) {
-		c.String(http.StatusAccepted, "Welcome")
+		sessionId := c.Request.Header.Get("session-id")
+		var session Session
+		if v, err := s.dao.GetSessionForUser(context.Background(), sessionId); err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+		} else if s, err := SessionLoad(v); err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+		} else {
+			session = s
+		}
+
+		c.String(http.StatusAccepted, "Welcome "+session.CurrentUser)
 	})
 }
 
