@@ -53,11 +53,8 @@ func (s *Server) Init() {
 	// Dummy handler to test the middleware
 	middleware := s.AuthenticationMiddleware()
 	s.engine.GET("/user/details", middleware, func(c *gin.Context) {
-		sessionId := c.Request.Header.Get("session-id")
 		var session Session
-		if v, err := s.dao.GetSessionForUser(context.Background(), sessionId); err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-		} else if s, err := SessionLoad(v); err != nil {
+		if s, err := s.SessionLoad(c); err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 		} else {
 			session = s
@@ -70,4 +67,17 @@ func (s *Server) Init() {
 // Run starts the server
 func (s *Server) Run(port int) {
 	s.engine.Run(":" + strconv.Itoa(port))
+}
+
+// SessionLoad loads session for that context
+func (s *Server) SessionLoad(c *gin.Context) (Session, error) {
+	sessionId := c.Request.Header.Get("session-id")
+	var session Session
+	if v, err := s.dao.GetSessionForUser(context.Background(), sessionId); err != nil {
+		return session, err
+	} else if s, err := SessionLoad(v); err != nil {
+		return session, err
+	} else {
+		return s, nil
+	}
 }

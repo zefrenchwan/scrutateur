@@ -7,6 +7,8 @@ import (
 	"net/http"
 )
 
+const CONNECTION_BASE = "http://localhost:3000/"
+
 // ClientSession has the main info to use the application: session id and authentication token
 type ClientSession struct {
 	sessionId      string
@@ -21,7 +23,7 @@ func Connect(login, password string) (ClientSession, error) {
 		panic(errMarshal)
 	}
 
-	if resp, err := http.Post("http://localhost:3000/login", "application/json", bytes.NewReader(payload)); err != nil {
+	if resp, err := http.Post(CONNECTION_BASE+"login", "application/json", bytes.NewReader(payload)); err != nil {
 		return result, err
 	} else {
 		result.sessionId = resp.Header.Get("session-id")
@@ -58,5 +60,5 @@ func (c *ClientSession) callEndpoint(method, url string) (string, error) {
 
 // GetUserDetails access server at that endpoint and returns this content
 func (c *ClientSession) GetUserDetails() (string, error) {
-	return c.callEndpoint("GET", "http://localhost:3000/user/details")
+	return c.callEndpoint("GET", CONNECTION_BASE+"user/details")
 }
