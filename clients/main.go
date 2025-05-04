@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/zefrenchwan/scrutateur.git/clients/clients"
 )
 
 func main() {
+	connectionStart := time.Now()
 	session, errConnection := clients.Connect("root", "root")
 	if errConnection != nil {
 		panic(errConnection)
@@ -16,6 +18,7 @@ func main() {
 	if errDetails != nil {
 		panic(errDetails)
 	} else {
-		fmt.Println("Hello " + identity)
+		fmt.Println("Hello "+identity, "(took ", time.Since(connectionStart), ")")
 	}
+
 }

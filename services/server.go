@@ -64,6 +64,7 @@ func (s *Server) Init() {
 		}
 
 		c.String(http.StatusAccepted, session.CurrentUser)
+		c.Next()
 	})
 }
 
