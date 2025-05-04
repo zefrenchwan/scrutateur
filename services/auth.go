@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -169,5 +170,55 @@ func (s *Server) AuthenticationMiddleware() gin.HandlerFunc {
 		c.Header("session-id", sessionId)
 
 		c.Next()
+	}
+}
+
+// RoleBasedCondition is a function to accept a set of roles or not.
+// It returns true and then accept page access, or false and page is refused
+type RoleBasedCondition func(roles map[string]int) bool
+
+// AcceptAtLeastOneRoleCondition returns true if at least a role is accepted
+// Formally, it returns true if roles contain at least one value in acceptedRoles
+func AcceptAtLeastOneRoleCondition(acceptedRoles []string) RoleBasedCondition {
+	return func(roles map[string]int) bool {
+		if len(roles) == 0 {
+			return false
+		}
+
+		keys := make([]string, 0, len(roles))
+		for k := range roles {
+			keys = append(keys, k)
+		}
+
+		for _, role := range acceptedRoles {
+			if slices.Contains(keys, role) {
+				return true
+			}
+		}
+
+		return false
+	}
+}
+
+// HasARoleCondition returns true if there is at least one role for that user
+func HasARoleCondition() RoleBasedCondition {
+	return func(roles map[string]int) bool {
+		return len(roles) != 0
+	}
+}
+
+// RolesBasedMiddleware accepts or refuses access based on current user roles
+func (s *Server) RolesBasedMiddleware(condition RoleBasedCondition) gin.HandlerFunc {
+	// this function tests the token, test session and then sets main headers
+	return func(c *gin.Context) {
+		if session, err := s.SessionLoad(c); err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+		} else if roles, err := s.dao.GetUserRoles(context.Background(), session.CurrentUser); err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+		} else if !condition(roles) {
+			c.AbortWithError(http.StatusUnauthorized, fmt.Errorf("user does not have sufficient roles to use content"))
+		} else {
+			c.Next()
+		}
 	}
 }

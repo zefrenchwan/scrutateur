@@ -50,9 +50,12 @@ func (s *Server) Init() {
 		s.Login(c)
 	})
 
-	// Dummy handler to test the middleware
+	// PROTECTED PAGES
 	middleware := s.AuthenticationMiddleware()
-	s.engine.GET("/user/whoami", middleware, func(c *gin.Context) {
+
+	// PAGES FOR AT LEAST A ROLE
+	allAuthUsersMiddleware := s.RolesBasedMiddleware(HasARoleCondition())
+	s.engine.GET("/user/whoami", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
 		var session Session
 		if s, err := s.SessionLoad(c); err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)

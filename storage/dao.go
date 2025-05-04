@@ -43,3 +43,9 @@ func (d *Dao) SetSessionForUser(context context.Context, sessionId string, sessi
 func (d *Dao) GetSessionForUser(context context.Context, sessionId string) ([]byte, error) {
 	return d.cache.GetSessionForUser(context, sessionId)
 }
+
+// GetUserRoles loads roles for a user.
+// Result is a map of role and score
+func (d *Dao) GetUserRoles(context context.Context, user string) (map[string]int, error) {
+	return d.rdb.LoadUserRoles(context, user)
+}

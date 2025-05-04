@@ -74,3 +74,28 @@ func (d *DbStorage) ValidateUser(ctx context.Context, login string, password str
 		return result, nil
 	}
 }
+
+// LoadUserRoles gets all the roles of a user
+func (d DbStorage) LoadUserRoles(ctx context.Context, user string) (map[string]int, error) {
+	result := make(map[string]int)
+	if rows, err := d.db.Query(ctx, "select role_name, role_score from auth.get_roles_for_user($1)", user); err != nil {
+		return result, err
+	} else if rows == nil {
+		return result, nil
+	} else {
+		defer rows.Close()
+
+		for rows.Next() {
+			if rows.Err() != nil {
+				return result, err
+			}
+
+			var role_name string
+			var role_score int
+			rows.Scan(&role_name, &role_score)
+			result[role_name] = role_score
+		}
+	}
+
+	return result, nil
+}

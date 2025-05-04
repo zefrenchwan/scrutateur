@@ -37,3 +37,48 @@ begin
 
     return l_counter = 1;
 end; $$;
+
+-- auth.roles define role name, a description and a score. 
+-- The higher the score, the more operations. 
+-- It is useful to define access conditions instead of enumerating all possible roles
+create table auth.roles (
+    role_id serial primary key, 
+    role_name text unique not null, 
+    role_description text not null,
+    role_score int not null check(role_score >= 0 and role_score <= 100)
+);
+
+-- define roles. Changing scores means auditing the full system again for security
+insert into auth.roles(role_name, role_description, role_score) values ('super admin','allows any action with grant actions too',100);
+insert into auth.roles(role_name, role_description, role_score) values ('admin','allows any action but cannot grant',50);
+insert into auth.roles(role_name, role_description, role_score) values ('editor','crud operations are allowed',10);
+insert into auth.roles(role_name, role_description, role_score) values ('reader','crud operations are allowed',1);
+
+-- users are linked into roles and then form a group (the admins, etc)
+create table auth.groups (
+    user_id int not null references auth.users(user_id),
+    role_id int not null references auth.roles(role_id)
+);
+
+-- grant root the highest scores
+with role_content as (
+    select role_id from auth.roles where role_score = 100
+)
+insert into auth.groups(user_id, role_id) 
+select user_id, role_id  
+from  auth.users USR 
+cross join role_content
+where USR.user_login = 'root';
+
+
+-- Given a user login, gets related access groups
+create or replace function auth.get_roles_for_user(p_user text) returns table(role_name text, role_score int) language plpgsql as $$
+declare 
+begin 
+    return query 
+        select ROL.role_name, ROL.role_score 
+        from auth.roles ROL 
+        join auth.groups GRO on GRO.role_id = ROL.role_id 
+        join auth.users USR on USR.user_id = GRO.user_id 
+        where USR.user_login = p_user;
+end;$$
