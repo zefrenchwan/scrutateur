@@ -1,7 +1,12 @@
 # scrutateur
-Toolbox to deal with clients behavior modeling
+Backend server to deal with patterns. 
 
 ## Installation 
+
+1. start docker instances with compose
+2. run main.go (for instance `go run main.go` )
+
+### Dependencies
 
 To create go.mod, actions were: 
 1. go get github.com/jackc/pgx/v5
@@ -11,11 +16,31 @@ To create go.mod, actions were:
 5. go get github.com/google/uuid
 6. go get github.com/redis/go-redis/v9   
 
-## Endpoints
+## Features
+
+### Endpoints
 
 * **/status** just a string if up 
-* **/login** expects a form with login and password, validates auth and returns the authorization set with the correct bearer. Example is `curl -i -X POST -H 'Content-Type: application/json' -d '{"login":"popo","password":"caca"}' localhost:3000/login`
+* **/login** expects a form with login and password, validates auth and returns the authorization set with the correct bearer. Example is `curl -i -X POST -H 'Content-Type: application/json' -d '{"login":"root","password":"secret"}' localhost:3000/login`
+* **/user/whoami/** displays user name if auth is valid and role allows it
 
-## Client
+### Security
+
+This project is not intented to run on production as is. 
+Code deals with basic security (just enough not to be ridiculous) and focuses more on features. 
+Weak points are secrets protection and default user mechanism. 
+**Adapt my code for your context, contact your administrator or security expert before pushing any of this code to production**
+
+Security features so far:
+* Role based mechanism
+* user auth based on JWT, password is stored as a sha256 hash, no salt
+
+### Client
 
 There is a golang client to perform client calls 
+
+## Architecture
+
+1. endpoints are either unprotected (login and status) or protected (with an auth check mechanism and access to pages are based on roles)
+2. Storage for auth is based on a relational database. 
+3. Sessions are based on a cache, a session-id header is expected once user is connected
