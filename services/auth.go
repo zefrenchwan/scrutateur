@@ -145,12 +145,15 @@ func (s *Server) AuthenticationMiddleware() gin.HandlerFunc {
 		// check that session id fits that user
 		if b, err := s.dao.GetSessionForUser(context.Background(), sessionId); err != nil {
 			c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("session loading failure: %s", err.Error()))
+			c.Abort()
 			return
 		} else if session, err := SessionLoad(b); err != nil {
 			c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("session loading failure: %s", err.Error()))
+			c.Abort()
 			return
 		} else if session.CurrentUser != username {
 			c.AbortWithError(http.StatusUnauthorized, fmt.Errorf("session mismatch"))
+			c.Abort()
 			return
 		}
 
@@ -213,10 +216,13 @@ func (s *Server) RolesBasedMiddleware(condition RoleBasedCondition) gin.HandlerF
 	return func(c *gin.Context) {
 		if session, err := s.SessionLoad(c); err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
+			c.Abort()
 		} else if roles, err := s.dao.GetUserRoles(context.Background(), session.CurrentUser); err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
+			c.Abort()
 		} else if !condition(roles) {
 			c.AbortWithError(http.StatusUnauthorized, fmt.Errorf("user does not have sufficient roles to use content"))
+			c.Abort()
 		} else {
 			c.Next()
 		}

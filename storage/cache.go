@@ -13,15 +13,16 @@ type CacheStorage struct {
 	ttl    time.Duration
 }
 
-// NewCacheStorage builds a cache storage with a given password to access data
-func NewCacheStorage(password string) CacheStorage {
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: password,
-		DB:       0,
-	})
-
-	return CacheStorage{client: rdb, ttl: time.Hour * 24}
+// NewCacheStorage builds a cache storage with a given url to access data
+func NewCacheStorage(url string) (CacheStorage, error) {
+	var result CacheStorage
+	if options, err := redis.ParseURL(url); err != nil {
+		return result, err
+	} else {
+		rdb := redis.NewClient(options)
+		result = CacheStorage{client: rdb, ttl: time.Hour * 24}
+	}
+	return result, nil
 }
 
 // SetSessionForUser sets the new value for a session id (defined at user level)

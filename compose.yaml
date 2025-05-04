@@ -1,4 +1,15 @@
 services:
+  app:
+    build:
+      context: .
+    ports:
+      - 3000:3000
+    environment:
+      - POSTGRESQL_URL=postgres://postgres:popo@postgres:5432/capi
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
   postgres:
     image: postgres:17-bookworm
     ports:
@@ -14,4 +25,8 @@ services:
     restart: always
     ports:
       - '6379:6379'
-    command: redis-server --loglevel warning --requirepass timmy
+    command: redis-server
+    environment:
+      - REDIS_PORT=6379
+      - REDIS_DATABASES=1
+ 

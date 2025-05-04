@@ -4,19 +4,25 @@ import (
 	"context"
 )
 
+type DaoOptions struct {
+	RedisURL      string
+	PostgresqlURL string
+}
+
 // Dao decorates any storage system (relational, cache, etc)
 type Dao struct {
 	rdb   DbStorage
 	cache CacheStorage
 }
 
-// NewDao returns a new dao for that db user and password
-func NewDao(user, password string, cachePassword string) (Dao, error) {
+// NewDao returns a new dao for those connection parameters
+func NewDao(options DaoOptions) (Dao, error) {
 	var dao Dao
-	if db, err := NewDbStorage(user, password); err != nil {
+	if db, err := NewDbStorage(options.PostgresqlURL); err != nil {
+		return dao, err
+	} else if cacheClient, err := NewCacheStorage(options.RedisURL); err != nil {
 		return dao, err
 	} else {
-		cacheClient := NewCacheStorage(cachePassword)
 		return Dao{rdb: db, cache: cacheClient}, nil
 	}
 }

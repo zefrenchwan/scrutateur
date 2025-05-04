@@ -3,6 +3,7 @@ package clients
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 )
@@ -50,7 +51,9 @@ func (c *ClientSession) callEndpoint(method, url string) (string, error) {
 		return "", err
 	} else {
 		defer resp.Body.Close()
-		if body, err := io.ReadAll(resp.Body); err != nil {
+		if resp.StatusCode >= 300 {
+			return "", fmt.Errorf("invalid call: %s", resp.Status)
+		} else if body, err := io.ReadAll(resp.Body); err != nil {
 			return "", err
 		} else {
 			return string(body), err

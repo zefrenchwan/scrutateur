@@ -1,14 +1,17 @@
 package main
 
 import (
+	"os"
+
 	"github.com/zefrenchwan/scrutateur.git/services"
 	"github.com/zefrenchwan/scrutateur.git/storage"
 )
 
 func main() {
+	options := storage.DaoOptions{PostgresqlURL: os.Getenv("POSTGRESQL_URL"), RedisURL: os.Getenv("REDIS_URL")}
 	// Create DAO
 	var dao storage.Dao
-	if db, err := storage.NewDao("postgres", "popo", "timmy"); err != nil {
+	if db, err := storage.NewDao(options); err != nil {
 		panic(err)
 	} else {
 		dao = db
