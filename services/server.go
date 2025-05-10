@@ -60,12 +60,12 @@ func (s *Server) Init() {
 		var session dto.Session
 		if s, err := s.SessionLoad(c); err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
+			c.Abort()
 		} else {
 			session = s
+			c.String(http.StatusAccepted, session.CurrentUser)
+			c.Next()
 		}
-
-		c.String(http.StatusAccepted, session.CurrentUser)
-		c.Next()
 	})
 }
 
