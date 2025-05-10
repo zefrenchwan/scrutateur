@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/zefrenchwan/scrutateur.git/dto"
 )
 
 // CacheStorage is a key value cache
@@ -26,8 +27,10 @@ func NewCacheStorage(url string) (CacheStorage, error) {
 }
 
 // SetSessionForUser sets the new value for a session id (defined at user level)
-func (c *CacheStorage) SetSessionForUser(context context.Context, sessionId string, session []byte) error {
-	if status := c.client.Set(context, sessionId, session, c.ttl); status.Err() != nil {
+func (c *CacheStorage) SetSessionForUser(context context.Context, sessionId string, session dto.Session) error {
+	if value, err := session.Serialize(); err != nil {
+		return err
+	} else if status := c.client.Set(context, sessionId, value, c.ttl); status.Err() != nil {
 		return status.Err()
 	}
 

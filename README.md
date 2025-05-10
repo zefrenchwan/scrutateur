@@ -56,3 +56,22 @@ To create go.mod, actions were:
 4. go get -u github.com/golang-jwt/jwt/v5
 5. go get github.com/google/uuid
 6. go get github.com/redis/go-redis/v9   
+
+### The security model 
+
+Users have a login and a password to prove their identity. 
+Roles define what an user may do: grant or not, read or write. 
+Hence, roles are: 
+1. root: admin with ability to grant roles
+2. admin: can perform admin functions such as creating users, changing roles, etc
+3. editor: can see and edit non critical content 
+4. reader: can see non critical content
+
+
+Then, resources are grouped into functions by name. 
+It depends on your configuration, but for instance: admin/create-user, admin/delete-user are basic admin operations forming a group of admin actions. 
+Resources need some authorizations for users to connect to. 
+For instance, admin/... expect admin or even root users. 
+
+
+Users have roles too, on a group of resources. 

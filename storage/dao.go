@@ -2,6 +2,8 @@ package storage
 
 import (
 	"context"
+
+	"github.com/zefrenchwan/scrutateur.git/dto"
 )
 
 type DaoOptions struct {
@@ -41,17 +43,20 @@ func (d *Dao) ValidateUser(ctx context.Context, login string, password string) (
 }
 
 // SetSessionForUser registers a session
-func (d *Dao) SetSessionForUser(context context.Context, sessionId string, session []byte) error {
+func (d *Dao) SetSessionForUser(context context.Context, sessionId string, session dto.Session) error {
 	return d.cache.SetSessionForUser(context, sessionId, session)
 }
 
 // GetSessionForUser gets a session by id
-func (d *Dao) GetSessionForUser(context context.Context, sessionId string) ([]byte, error) {
-	return d.cache.GetSessionForUser(context, sessionId)
+func (d *Dao) GetSessionForUser(context context.Context, sessionId string) (dto.Session, error) {
+	if raw, err := d.cache.GetSessionForUser(context, sessionId); err != nil {
+		return dto.Session{}, err
+	} else {
+		return dto.SessionLoad(raw)
+	}
 }
 
-// GetUserRoles loads roles for a user.
-// Result is a map of role and score
-func (d *Dao) GetUserRoles(context context.Context, user string) (map[string]int, error) {
-	return d.rdb.LoadUserRoles(context, user)
+// GetUserGrantedAccess returns, for a user, all the rules conditions to access a resource
+func (d *Dao) GetUserGrantedAccess(context context.Context, user string) ([]dto.GrantAccessForResource, error) {
+	return d.rdb.GetUserGrantedAccess(context, user)
 }

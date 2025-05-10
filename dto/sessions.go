@@ -1,4 +1,4 @@
-package services
+package dto
 
 import "encoding/json"
 

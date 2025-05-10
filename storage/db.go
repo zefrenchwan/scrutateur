@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/zefrenchwan/scrutateur.git/dto"
 )
 
 // DbStorage decorates pgx
@@ -72,10 +73,10 @@ func (d *DbStorage) ValidateUser(ctx context.Context, login string, password str
 	}
 }
 
-// LoadUserRoles gets all the roles of a user
-func (d DbStorage) LoadUserRoles(ctx context.Context, user string) (map[string]int, error) {
-	result := make(map[string]int)
-	if rows, err := d.db.Query(ctx, "select role_name, role_score from auth.get_roles_for_user($1)", user); err != nil {
+// GetUserGrantedAccess gets all the
+func (d DbStorage) GetUserGrantedAccess(ctx context.Context, user string) ([]dto.GrantAccessForResource, error) {
+	var result []dto.GrantAccessForResource
+	if rows, err := d.db.Query(ctx, "select operator, template_url, roles from auth.get_grants_for_user($1) ", user); err != nil {
 		return result, err
 	} else if rows == nil {
 		return result, nil
@@ -87,10 +88,18 @@ func (d DbStorage) LoadUserRoles(ctx context.Context, user string) (map[string]i
 				return result, err
 			}
 
-			var role_name string
-			var role_score int
-			rows.Scan(&role_name, &role_score)
-			result[role_name] = role_score
+			var operator string
+			var template_url string
+			roles := []string{}
+			if err := rows.Scan(&operator, &template_url, &roles); err != nil {
+				return result, err
+			} else if parsedRoles, err := dto.ParseGrantRoles(roles); err != nil {
+				return result, err
+			} else if op, err := dto.ParseGrantOperator(operator); err != nil {
+				return result, err
+			} else {
+				result = append(result, dto.GrantAccessForResource{Operator: op, Template: template_url, UserRoles: parsedRoles})
+			}
 		}
 	}
 

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/zefrenchwan/scrutateur.git/dto"
 	"github.com/zefrenchwan/scrutateur.git/storage"
 )
 
@@ -54,9 +55,9 @@ func (s *Server) Init() {
 	middleware := s.AuthenticationMiddleware()
 
 	// PAGES FOR AT LEAST A ROLE
-	allAuthUsersMiddleware := s.RolesBasedMiddleware(HasARoleCondition())
+	allAuthUsersMiddleware := s.RolesBasedMiddleware()
 	s.engine.GET("/user/whoami", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
-		var session Session
+		var session dto.Session
 		if s, err := s.SessionLoad(c); err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 		} else {
@@ -74,14 +75,7 @@ func (s *Server) Run(port int) {
 }
 
 // SessionLoad loads session for that context
-func (s *Server) SessionLoad(c *gin.Context) (Session, error) {
+func (s *Server) SessionLoad(c *gin.Context) (dto.Session, error) {
 	sessionId := c.Request.Header.Get("session-id")
-	var session Session
-	if v, err := s.dao.GetSessionForUser(context.Background(), sessionId); err != nil {
-		return session, err
-	} else if s, err := SessionLoad(v); err != nil {
-		return session, err
-	} else {
-		return s, nil
-	}
+	return s.dao.GetSessionForUser(context.Background(), sessionId)
 }

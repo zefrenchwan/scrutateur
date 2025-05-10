@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"slices"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/zefrenchwan/scrutateur.git/dto"
 )
 
 // NewSecret builds a new secret
@@ -57,12 +58,8 @@ func (s *Server) Login(c *gin.Context) {
 
 	// set session id value
 	newSessionId := NewSecret()
-	session := NewSessionForUser(auth.Login)
-	if value, err := session.Serialize(); err != nil {
-		fmt.Println(err)
-		c.String(http.StatusInternalServerError, "Cannot save session")
-		return
-	} else if err := s.dao.SetSessionForUser(context.Background(), newSessionId, value); err != nil {
+	session := dto.NewSessionForUser(auth.Login)
+	if err := s.dao.SetSessionForUser(context.Background(), newSessionId, session); err != nil {
 		fmt.Println(err)
 		c.String(http.StatusInternalServerError, "Cannot store session")
 		return
@@ -143,11 +140,7 @@ func (s *Server) AuthenticationMiddleware() gin.HandlerFunc {
 		// Now we want to check user session
 		sessionId := c.Request.Header.Get("session-id")
 		// check that session id fits that user
-		if b, err := s.dao.GetSessionForUser(context.Background(), sessionId); err != nil {
-			c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("session loading failure: %s", err.Error()))
-			c.Abort()
-			return
-		} else if session, err := SessionLoad(b); err != nil {
+		if session, err := s.dao.GetSessionForUser(context.Background(), sessionId); err != nil {
 			c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("session loading failure: %s", err.Error()))
 			c.Abort()
 			return
@@ -176,55 +169,65 @@ func (s *Server) AuthenticationMiddleware() gin.HandlerFunc {
 	}
 }
 
-// RoleBasedCondition is a function to accept a set of roles or not.
-// It returns true and then accept page access, or false and page is refused
-type RoleBasedCondition func(roles map[string]int) bool
+// AuthRulesEngine applies grant conditions and tests whether an user may access a resource
+type AuthRulesEngine struct {
+	// Conditions to apply
+	Conditions []dto.GrantAccessForResource
+}
 
-// AcceptAtLeastOneRoleCondition returns true if at least a role is accepted
-// Formally, it returns true if roles contain at least one value in acceptedRoles
-func AcceptAtLeastOneRoleCondition(acceptedRoles []string) RoleBasedCondition {
-	return func(roles map[string]int) bool {
-		if len(roles) == 0 {
-			return false
-		}
-
-		keys := make([]string, 0, len(roles))
-		for k := range roles {
-			keys = append(keys, k)
-		}
-
-		for _, role := range acceptedRoles {
-			if slices.Contains(keys, role) {
-				return true
+// CanAccessResource returns true and roles for user if user may access, false and nil otherwise. Error if any as the last value
+func (re *AuthRulesEngine) CanAccessResource(url string) (bool, []dto.GrantRole, error) {
+	for _, condition := range re.Conditions {
+		template_url := condition.Template
+		expected_roles := condition.UserRoles
+		switch condition.Operator {
+		case dto.OperatorEquals:
+			if template_url == url {
+				return true, expected_roles, nil
+			}
+		case dto.OperatorStartsWith:
+			if strings.HasPrefix(url, template_url) {
+				return true, expected_roles, nil
+			}
+		case dto.OperatorContains:
+			if strings.Contains(url, template_url) {
+				return true, expected_roles, nil
+			}
+		case dto.OperatorMatches:
+			// replace * with \S+ and apply golang regexp
+			template_url = strings.ReplaceAll(template_url, "*", "\\S+")
+			if res, err := regexp.MatchString(template_url, url); err != nil {
+				return false, nil, err
+			} else if res {
+				return true, expected_roles, nil
 			}
 		}
-
-		return false
 	}
+
+	return false, nil, nil
 }
 
-// HasARoleCondition returns true if there is at least one role for that user
-func HasARoleCondition() RoleBasedCondition {
-	return func(roles map[string]int) bool {
-		return len(roles) != 0
-	}
-}
-
-// RolesBasedMiddleware accepts or refuses access based on current user roles
-func (s *Server) RolesBasedMiddleware(condition RoleBasedCondition) gin.HandlerFunc {
+// RolesBasedMiddleware tests if user may access this page or not, based on roles based conditions in database
+func (s *Server) RolesBasedMiddleware() gin.HandlerFunc {
 	// this function tests the token, test session and then sets main headers
 	return func(c *gin.Context) {
 		if session, err := s.SessionLoad(c); err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			c.Abort()
-		} else if roles, err := s.dao.GetUserRoles(context.Background(), session.CurrentUser); err != nil {
+		} else if conditions, err := s.dao.GetUserGrantedAccess(context.Background(), session.CurrentUser); err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			c.Abort()
-		} else if !condition(roles) {
-			c.AbortWithError(http.StatusUnauthorized, fmt.Errorf("user does not have sufficient roles to use content"))
-			c.Abort()
 		} else {
-			c.Next()
+			engine := AuthRulesEngine{Conditions: conditions}
+			if accept, _, err := engine.CanAccessResource(c.Request.URL.Path); err != nil {
+				c.AbortWithError(http.StatusInternalServerError, err)
+				c.Abort()
+			} else if !accept {
+				c.AbortWithError(http.StatusUnauthorized, fmt.Errorf("cannot access %s due to missing permissions", c.Request.RequestURI))
+				c.Abort()
+			} else {
+				c.Next()
+			}
 		}
 	}
 }
