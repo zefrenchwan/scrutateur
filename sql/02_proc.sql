@@ -69,6 +69,20 @@ begin
 
 end;$$;
 
+-- auth.remove_access_from_group_to_user removes all access to a group of resources for that user
+create or replace auth.remove_access_from_group_to_user(p_user text, p_group text) language plpgpsl as $$
+declare 
+    l_user_id int;
+begin 
+
+    select user_id from auth.users where user_login = p_user;
+
+    if user_id is not null and user_id > 0 then 
+        delete from auth.grants where user_id = l_user_id and group_name = p_group;
+    end if;
+
+end;$$;
+
 
 -- given a user (per login), get all user's access for resources user could use:
 -- role name (root, admin, etc) of the user for that pattern 
