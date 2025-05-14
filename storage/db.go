@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -73,7 +74,7 @@ func (d *DbStorage) ValidateUser(ctx context.Context, login string, password str
 	}
 }
 
-// GetUserGrantedAccess gets all the
+// GetUserGrantedAccess gets all the grants access for a user
 func (d DbStorage) GetUserGrantedAccess(ctx context.Context, user string) ([]dto.GrantAccessForResource, error) {
 	var result []dto.GrantAccessForResource
 	if rows, err := d.db.Query(ctx, "select operator, template_url, roles from auth.get_grants_for_user($1) ", user); err != nil {
@@ -104,4 +105,34 @@ func (d DbStorage) GetUserGrantedAccess(ctx context.Context, user string) ([]dto
 	}
 
 	return result, nil
+}
+
+// CreateUser creates an user in database with that password
+func (d DbStorage) CreateUser(ctx context.Context, username, password string) error {
+	if _, err := d.db.Exec(ctx, "call auth.upsert_user_auth($1, $2)", username, password); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GrantAccessToGroupOfResources sets roles for user to that group of resources
+func (d DbStorage) GrantAccessToGroupOfResources(ctx context.Context, username string, roles []dto.GrantRole, group string) error {
+	if len(roles) == 0 {
+		return fmt.Errorf("no role for that grant request")
+	}
+
+	mapping := make([]string, len(roles))
+	for index, value := range roles {
+		mapping[index] = string(value)
+	}
+
+	_, err := d.db.Exec(ctx, "call  auth.grant_group_access_to_user($1,$2,$3)", username, mapping, group)
+	return err
+}
+
+// RemoveAccessToGroupOfResources removes access rights for that user to a given group of resources
+func (d DbStorage) RemoveAccessToGroupOfResources(ctx context.Context, username string, group string) error {
+	_, err := d.db.Exec(ctx, "call  auth.remove_access_from_group_to_user($1,$2)", username, group)
+	return err
 }

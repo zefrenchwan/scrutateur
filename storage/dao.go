@@ -60,3 +60,18 @@ func (d *Dao) GetSessionForUser(context context.Context, sessionId string) (dto.
 func (d *Dao) GetUserGrantedAccess(context context.Context, user string) ([]dto.GrantAccessForResource, error) {
 	return d.rdb.GetUserGrantedAccess(context, user)
 }
+
+// CreateUser creates an user with a given password
+func (d *Dao) CreateUser(ctx context.Context, username, password string) error {
+	return d.rdb.CreateUser(ctx, username, password)
+}
+
+// GrantAccessToGroupOfResources sets roles for user to that group of resources
+func (d *Dao) GrantAccessToGroupOfResources(ctx context.Context, username string, roles []dto.GrantRole, group string) error {
+	return d.rdb.GrantAccessToGroupOfResources(ctx, username, roles, group)
+}
+
+// RemoveAccessToGroupOfResources removes access rights for that user to a given group of resources
+func (d *Dao) RemoveAccessToGroupOfResources(ctx context.Context, username string, group string) error {
+	return d.rdb.RemoveAccessToGroupOfResources(ctx, username, group)
+}
