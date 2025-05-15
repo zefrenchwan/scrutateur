@@ -8,8 +8,9 @@ import (
 )
 
 func main() {
+	currentPassword := "root"
 	connectionStart := time.Now()
-	session, errConnection := clients.Connect("root", "root")
+	session, errConnection := clients.Connect("root", currentPassword)
 	if errConnection != nil {
 		panic(errConnection)
 	}
@@ -25,8 +26,10 @@ func main() {
 	newPassword := "popo"
 	if _, err := session.SetUserPassword(newPassword); err != nil {
 		panic(err)
+	} else if _, err := session.SetUserPassword(currentPassword); err != nil {
+		panic(err)
 	} else {
-		fmt.Println("Changed password (took ", time.Since(connectionStart), ")")
+		fmt.Println("Changed password twice (took ", time.Since(connectionStart), ")")
 	}
 
 }
