@@ -56,17 +56,23 @@ func (s *Server) Init() {
 
 	// PAGES FOR AT LEAST A ROLE
 	allAuthUsersMiddleware := s.RolesBasedMiddleware()
+
+	/////////////////////////////////////////////////
+	// GROUP SELF: USERS GET THEIR OWN INFORMATION //
+	/////////////////////////////////////////////////
 	s.engine.GET("/user/whoami", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
-		var session dto.Session
-		if s, err := s.SessionLoad(c); err != nil {
+		if session, err := s.SessionLoad(c); err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			c.Abort()
 		} else {
-			session = s
 			c.String(http.StatusAccepted, session.CurrentUser)
 			c.Next()
 		}
 	})
+
+	////////////////////////////////////////////////////////////////
+	// GROUP ADMIN: DEAL WITH USER ACCESS FOR READING AND EDITION //
+	////////////////////////////////////////////////////////////////
 }
 
 // Run starts the server
