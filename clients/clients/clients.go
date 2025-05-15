@@ -34,20 +34,27 @@ func Connect(login, password string) (ClientSession, error) {
 }
 
 // callEndpoint is the low level http call mechanism
-func (c *ClientSession) callEndpoint(method, url string) (string, error) {
+func (c *ClientSession) callEndpoint(method, url string, body string) (string, error) {
 	client := http.Client{}
-	req, err := http.NewRequest(method, url, nil)
-	if err != nil {
-		return "", err
+	var request *http.Request
+	var payload io.Reader
+	if len(body) != 0 {
+		payload = bytes.NewReader([]byte(body))
 	}
 
-	req.Header = http.Header{
+	if req, err := http.NewRequest(method, url, payload); err != nil {
+		return "", err
+	} else {
+		request = req
+	}
+
+	request.Header = http.Header{
 		"Content-Type":  {"application/json"},
 		"Authorization": {c.authentication},
 		"session-id":    {c.sessionId},
 	}
 
-	if resp, err := client.Do(req); err != nil {
+	if resp, err := client.Do(request); err != nil {
 		return "", err
 	} else {
 		defer resp.Body.Close()
@@ -63,5 +70,9 @@ func (c *ClientSession) callEndpoint(method, url string) (string, error) {
 
 // GetUsername access server at that endpoint and returns this content
 func (c *ClientSession) GetUsername() (string, error) {
-	return c.callEndpoint("GET", CONNECTION_BASE+"user/whoami")
+	return c.callEndpoint("GET", CONNECTION_BASE+"user/whoami", "")
+}
+
+func (c *ClientSession) SetUserPassword(password string) (string, error) {
+	return c.callEndpoint("POST", CONNECTION_BASE+"user/password", password)
 }

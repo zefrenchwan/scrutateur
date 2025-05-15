@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -57,15 +58,31 @@ func (s *Server) Init() {
 	// PAGES FOR AT LEAST A ROLE
 	allAuthUsersMiddleware := s.RolesBasedMiddleware()
 
-	/////////////////////////////////////////////////
-	// GROUP SELF: USERS GET THEIR OWN INFORMATION //
-	/////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////
+	// GROUP SELF: USERS GET THEIR OWN INFORMATION OR CHANGE THEIR OWN PASSWORD //
+	//////////////////////////////////////////////////////////////////////////////
 	s.engine.GET("/user/whoami", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
 		if session, err := s.SessionLoad(c); err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			c.Abort()
 		} else {
-			c.String(http.StatusAccepted, session.CurrentUser)
+			c.String(http.StatusOK, session.CurrentUser)
+			c.Next()
+		}
+	})
+
+	s.engine.POST("/user/password", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
+		if session, err := s.SessionLoad(c); err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			c.Abort()
+		} else if password, err := io.ReadAll(c.Request.Body); err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			c.Abort()
+		} else if err := s.dao.UpsertUser(context.Background(), session.CurrentUser, string(password)); err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			c.Abort()
+		} else {
+			c.Status(http.StatusOK)
 			c.Next()
 		}
 	})

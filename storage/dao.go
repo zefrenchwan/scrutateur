@@ -61,9 +61,9 @@ func (d *Dao) GetUserGrantedAccess(context context.Context, user string) ([]dto.
 	return d.rdb.GetUserGrantedAccess(context, user)
 }
 
-// CreateUser creates an user with a given password
-func (d *Dao) CreateUser(ctx context.Context, username, password string) error {
-	return d.rdb.CreateUser(ctx, username, password)
+// UpsertUser creates an user in database with that password if it does not exist, or changes current password
+func (d *Dao) UpsertUser(ctx context.Context, username, password string) error {
+	return d.rdb.UpsertUser(ctx, username, password)
 }
 
 // GrantAccessToGroupOfResources sets roles for user to that group of resources

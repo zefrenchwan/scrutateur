@@ -10,5 +10,5 @@ insert into auth.roles(role_name, role_description) values ('reader','read only 
 -- TODO: ADD IN HERE ALL THE RESOURCES ONE SHOULD ACCESS --
 -----------------------------------------------------------
 call auth.add_resource(ARRAY['reader','editor','admin','root']::text[],'EQUALS','/user/whoami','self');
-
+call auth.add_resource(ARRAY['reader','editor','admin','root']::text[],'EQUALS','/user/password','self');
 --------------------------------------------------------

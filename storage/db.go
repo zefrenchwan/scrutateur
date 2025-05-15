@@ -107,8 +107,8 @@ func (d DbStorage) GetUserGrantedAccess(ctx context.Context, user string) ([]dto
 	return result, nil
 }
 
-// CreateUser creates an user in database with that password
-func (d DbStorage) CreateUser(ctx context.Context, username, password string) error {
+// UpsertUser creates an user in database with that password if it does not exist, or changes current password
+func (d DbStorage) UpsertUser(ctx context.Context, username, password string) error {
 	if _, err := d.db.Exec(ctx, "call auth.upsert_user_auth($1, $2)", username, password); err != nil {
 		return err
 	}

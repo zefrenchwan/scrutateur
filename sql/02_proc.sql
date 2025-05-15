@@ -70,7 +70,7 @@ begin
 end;$$;
 
 -- auth.remove_access_from_group_to_user removes all access to a group of resources for that user
-create or replace auth.remove_access_from_group_to_user(p_user text, p_group text) language plpgpsl as $$
+create or replace procedure auth.remove_access_from_group_to_user(p_user text, p_group text) language plpgsql as $$
 declare 
     l_user_id int;
 begin 

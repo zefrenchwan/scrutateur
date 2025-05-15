@@ -21,4 +21,12 @@ func main() {
 		fmt.Println("Hello "+identity, "(took ", time.Since(connectionStart), ")")
 	}
 
+	connectionStart = time.Now()
+	newPassword := "popo"
+	if _, err := session.SetUserPassword(newPassword); err != nil {
+		panic(err)
+	} else {
+		fmt.Println("Changed password (took ", time.Since(connectionStart), ")")
+	}
+
 }
