@@ -73,6 +73,7 @@ func (c *ClientSession) GetUsername() (string, error) {
 	return c.callEndpoint("GET", CONNECTION_BASE+"user/whoami", "")
 }
 
-func (c *ClientSession) SetUserPassword(password string) (string, error) {
-	return c.callEndpoint("POST", CONNECTION_BASE+"user/password", password)
+func (c *ClientSession) SetUserPassword(password string) error {
+	_, err := c.callEndpoint("POST", CONNECTION_BASE+"user/password", password)
+	return err
 }

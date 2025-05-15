@@ -24,9 +24,9 @@ func main() {
 
 	connectionStart = time.Now()
 	newPassword := "popo"
-	if _, err := session.SetUserPassword(newPassword); err != nil {
+	if err := session.SetUserPassword(newPassword); err != nil {
 		panic(err)
-	} else if _, err := session.SetUserPassword(currentPassword); err != nil {
+	} else if err := session.SetUserPassword(currentPassword); err != nil {
 		panic(err)
 	} else {
 		fmt.Println("Changed password twice (took ", time.Since(connectionStart), ")")
