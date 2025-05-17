@@ -73,7 +73,21 @@ func (c *ClientSession) GetUsername() (string, error) {
 	return c.callEndpoint("GET", CONNECTION_BASE+"user/whoami", "")
 }
 
+// SetUserPassword changes user password
 func (c *ClientSession) SetUserPassword(password string) error {
 	_, err := c.callEndpoint("POST", CONNECTION_BASE+"user/password", password)
 	return err
+}
+
+// AddUser is an admin task that adds an user with that username and password.
+// NOTE THAT this user has no role at all once created
+func (c *ClientSession) AddUser(username, password string) error {
+	payload := map[string]string{"username": username, "password": password}
+	if body, err := json.Marshal(payload); err != nil {
+		return err
+	} else if _, err := c.callEndpoint("POST", CONNECTION_BASE+"admin/user/create", string(body)); err != nil {
+		return err
+	}
+
+	return nil
 }
