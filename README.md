@@ -25,6 +25,8 @@ Hello root (took  32.0662ms )
 * **/status** just a string if up 
 * **/login** expects a form with login and password, validates auth and returns the authorization set with the correct bearer. Example is `curl -i -X POST -H 'Content-Type: application/json' -d '{"login":"root","password":"secret"}' localhost:3000/login`
 * **/user/whoami/** displays user name if auth is valid and role allows it
+* **/user/password** changes current user's password
+* **/admin/user/create** will create an user (with no role)
 
 ### Security
 

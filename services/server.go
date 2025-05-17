@@ -2,8 +2,6 @@ package services
 
 import (
 	"context"
-	"io"
-	"net/http"
 	"strconv"
 	"time"
 
@@ -62,34 +60,19 @@ func (s *Server) Init() {
 	// GROUP SELF: USERS GET THEIR OWN INFORMATION OR CHANGE THEIR OWN PASSWORD //
 	//////////////////////////////////////////////////////////////////////////////
 	s.engine.GET("/user/whoami", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
-		if session, err := s.SessionLoad(c); err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-			c.Abort()
-		} else {
-			c.String(http.StatusOK, session.CurrentUser)
-			c.Next()
-		}
+		s.endpointUserInformation(c)
 	})
 
 	s.engine.POST("/user/password", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
-		if session, err := s.SessionLoad(c); err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-			c.Abort()
-		} else if password, err := io.ReadAll(c.Request.Body); err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-			c.Abort()
-		} else if err := s.dao.UpsertUser(context.Background(), session.CurrentUser, string(password)); err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-			c.Abort()
-		} else {
-			c.Status(http.StatusOK)
-			c.Next()
-		}
+		s.endpointChangePassword(c)
 	})
 
 	////////////////////////////////////////////////////////////////
 	// GROUP ADMIN: DEAL WITH USER ACCESS FOR READING AND EDITION //
 	////////////////////////////////////////////////////////////////
+	s.engine.POST("/admin/user/create", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
+		s.endpointAdminCreateUser(c)
+	})
 }
 
 // Run starts the server
