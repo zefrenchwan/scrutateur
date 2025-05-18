@@ -91,3 +91,9 @@ func (c *ClientSession) AddUser(username, password string) error {
 
 	return nil
 }
+
+// DeleteUser deletes user by login
+func (c *ClientSession) DeleteUser(username string) error {
+	_, err := c.callEndpoint("DELETE", CONNECTION_BASE+"root/user/delete/"+username, "")
+	return err
+}

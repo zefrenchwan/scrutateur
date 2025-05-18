@@ -5,6 +5,18 @@ begin
     on conflict (user_login) do update set user_hash_password = sha256(p_password::bytea);
 end;$$;
 
+-- auth.delete_user deletes an user per login / username
+create or replace procedure auth.delete_user(p_login text) language plpgsql as $$
+declare 
+    l_user_id int;
+begin 
+    select user_id into l_user_id from auth.users where user_login = p_login;
+    if l_user_id is not null then 
+        delete from auth.grants where user_id = l_user_id;
+        delete from auth.users where user_id = l_user_id; 
+    end if;
+end;$$;
+
 
 -- auth.validate_auth returns true if user login matches password, false otherwise (no login, or wrong password)
 create or replace function auth.validate_auth(p_user text, p_password text) returns bool language plpgsql as $$

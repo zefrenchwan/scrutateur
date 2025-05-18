@@ -66,6 +66,11 @@ func (d *Dao) UpsertUser(ctx context.Context, username, password string) error {
 	return d.rdb.UpsertUser(ctx, username, password)
 }
 
+// DeleteUser deletes user regardless user's access rights
+func (d *Dao) DeleteUser(ctx context.Context, username string) error {
+	return d.rdb.DeleteUser(ctx, username)
+}
+
 // GrantAccessToGroupOfResources sets roles for user to that group of resources
 func (d *Dao) GrantAccessToGroupOfResources(ctx context.Context, username string, roles []dto.GrantRole, group string) error {
 	return d.rdb.GrantAccessToGroupOfResources(ctx, username, roles, group)

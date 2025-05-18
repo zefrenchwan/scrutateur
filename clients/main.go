@@ -36,8 +36,9 @@ func main() {
 	var username = "other"
 	if err := session.AddUser(username, "secret"); err != nil {
 		panic(err)
+	} else if err := session.DeleteUser(username); err != nil {
+		panic(err)
 	} else {
-		fmt.Println("Created new user (took ", time.Since(connectionStart), ")")
+		fmt.Println("Created and deleted new user (took ", time.Since(connectionStart), ")")
 	}
-
 }

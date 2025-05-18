@@ -73,6 +73,13 @@ func (s *Server) Init() {
 	s.engine.POST("/admin/user/create", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
 		s.endpointAdminCreateUser(c)
 	})
+
+	///////////////////////////////////////////////////////////////////////////////////////
+	// GROUP ROOT: CRITICAL OPERATIONS THAT DEAL WITH ADMIN ACCESS OR USER RISKY ACTIONS //
+	///////////////////////////////////////////////////////////////////////////////////////
+	s.engine.DELETE("/root/user/delete/:username", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
+		s.endpointRootDeleteUser(c)
+	})
 }
 
 // Run starts the server

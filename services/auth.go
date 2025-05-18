@@ -194,11 +194,16 @@ func (re *AuthRulesEngine) CanAccessResource(url string) (bool, []dto.GrantRole,
 				return true, expected_roles, nil
 			}
 		case dto.OperatorMatches:
+			localTest := true
+			// test first that there is exactly the same amount of / parts
+			if len(strings.Split(url, "/")) != len(strings.Split(template_url, "/")) {
+				localTest = false
+			}
 			// replace * with \S+ and apply golang regexp
 			template_url = strings.ReplaceAll(template_url, "*", "\\S+")
 			if res, err := regexp.MatchString(template_url, url); err != nil {
-				return false, nil, err
-			} else if res {
+				localTest = false
+			} else if localTest && res {
 				return true, expected_roles, nil
 			}
 		}

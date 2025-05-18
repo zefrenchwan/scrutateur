@@ -116,6 +116,12 @@ func (d DbStorage) UpsertUser(ctx context.Context, username, password string) er
 	return nil
 }
 
+// DeleteUser deletes user regardless user's access rights
+func (d DbStorage) DeleteUser(ctx context.Context, username string) error {
+	_, err := d.db.Exec(ctx, "call auth.delete_user($1)", username)
+	return err
+}
+
 // GrantAccessToGroupOfResources sets roles for user to that group of resources
 func (d DbStorage) GrantAccessToGroupOfResources(ctx context.Context, username string, roles []dto.GrantRole, group string) error {
 	if len(roles) == 0 {

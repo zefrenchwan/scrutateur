@@ -12,4 +12,5 @@ insert into auth.roles(role_name, role_description) values ('reader','read only 
 call auth.add_resource(ARRAY['reader','editor','admin','root']::text[],'EQUALS','/user/whoami','self');
 call auth.add_resource(ARRAY['reader','editor','admin','root']::text[],'EQUALS','/user/password','self');
 call auth.add_resource(ARRAY['admin','root']::text[],'EQUALS','/admin/user/create','user.admin');
+call auth.add_resource(ARRAY['root']::text[],'MATCHES','/root/user/delete/*','user.root');
 --------------------------------------------------------
