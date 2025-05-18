@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -26,6 +27,9 @@ func (s *Server) endpointChangePassword(c *gin.Context) {
 		c.Abort()
 	} else if password, err := io.ReadAll(c.Request.Body); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
+		c.Abort()
+	} else if !ValidateUserpasswordFormat(string(password)) {
+		c.AbortWithError(http.StatusForbidden, fmt.Errorf("invalid password format"))
 		c.Abort()
 	} else if err := s.dao.UpsertUser(context.Background(), session.CurrentUser, string(password)); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)

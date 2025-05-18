@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -18,6 +19,12 @@ func (s *Server) endpointAdminCreateUser(c *gin.Context) {
 	var content UserCreationContent
 	if err := c.ShouldBindBodyWithJSON(&content); err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
+		c.Abort()
+	} else if !ValidateUsernameFormat(content.Username) {
+		c.AbortWithError(http.StatusForbidden, fmt.Errorf("invalid username format"))
+		c.Abort()
+	} else if !ValidateUserpasswordFormat(content.Password) {
+		c.AbortWithError(http.StatusForbidden, fmt.Errorf("invalid password format"))
 		c.Abort()
 	} else if err := s.dao.UpsertUser(context.Background(), content.Username, content.Password); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)

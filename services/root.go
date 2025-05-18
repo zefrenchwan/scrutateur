@@ -14,6 +14,9 @@ func (s *Server) endpointRootDeleteUser(c *gin.Context) {
 	if len(username) == 0 {
 		c.AbortWithError(http.StatusBadRequest, fmt.Errorf("missing username for user deletion"))
 		c.Abort()
+	} else if !ValidateUsernameFormat(username) {
+		c.AbortWithError(http.StatusForbidden, fmt.Errorf("invalid password format"))
+		c.Abort()
 	} else if session, err := s.SessionLoad(c); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		c.Abort()

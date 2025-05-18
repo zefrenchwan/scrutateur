@@ -18,6 +18,14 @@ Expected result should look like
 Hello root (took  32.0662ms )
 ```
 
+### Steps before pushing to production 
+
+1. Change passwords (sql/) 
+2. Change deployment properties (compose.yaml)
+3. Change input validators (services.validators)
+4. Audit code
+5. Then, deliver 
+
 ## Features
 
 ### Endpoints
@@ -89,3 +97,11 @@ For instance, admin/... expect admin or even root users.
 
 
 Users have roles too, on a group of resources. 
+
+
+## FAQ 
+
+### What did you do to deal with security ? 
+
+* Role based model
+* input validators to prevent sql injection 
