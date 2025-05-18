@@ -22,11 +22,23 @@ Hello root (took  32.0662ms )
 
 ### Endpoints
 
-* **/status** just a string if up 
+#### Infrastructure 
+* **/status** just a string if up
+
+#### Unprotected operations 
 * **/login** expects a form with login and password, validates auth and returns the authorization set with the correct bearer. Example is `curl -i -X POST -H 'Content-Type: application/json' -d '{"login":"root","password":"secret"}' localhost:3000/login`
+
+#### Self group: actions from current user to current user 
 * **/user/whoami/** displays user name if auth is valid and role allows it
 * **/user/password** changes current user's password
-* **/admin/user/create** will create an user (with no role)
+
+#### Admin operations on users
+
+* **/admin/user/create** creates an user (with no role)
+
+#### Root operations on users
+
+* **/root/user/delete/{username}** deletes an user by name (no matter user's roles). Current user cannot delete current user
 
 ### Security
 
