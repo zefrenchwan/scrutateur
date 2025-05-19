@@ -82,7 +82,7 @@ func (c *ClientSession) SetUserPassword(password string) error {
 // AddUser is an admin task that adds an user with that username and password.
 // NOTE THAT this user has no role at all once created
 func (c *ClientSession) AddUser(username, password string) error {
-	payload := map[string]string{"username": username, "password": password}
+	payload := map[string]string{"name": username, "password": password}
 	if body, err := json.Marshal(payload); err != nil {
 		return err
 	} else if _, err := c.callEndpoint("POST", CONNECTION_BASE+"admin/user/create", string(body)); err != nil {

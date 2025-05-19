@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"log"
 	"strconv"
 	"time"
 
@@ -20,16 +21,24 @@ type Server struct {
 	dao storage.Dao
 	// engine is the technical solution to implement server logic (gin in this case)
 	engine *gin.Engine
+	// logger displays logs into log output
+	logger *log.Logger
 }
 
 // NewServer makes a new app server with a given dao
-func NewServer(dao storage.Dao) Server {
+func NewServer(dao storage.Dao, logger *log.Logger) Server {
 	return Server{
 		dao:           dao,
 		engine:        gin.New(),
 		secret:        NewSecret(),
 		tokenDuration: time.Hour * 24,
+		logger:        logger,
 	}
+}
+
+// Log writes log
+func (s *Server) Log(values ...any) {
+	s.logger.Println(values...)
 }
 
 // Status is a ping handler

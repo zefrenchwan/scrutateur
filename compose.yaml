@@ -4,6 +4,8 @@ services:
       context: .
     ports:
       - 3000:3000
+    volumes:
+      - ./logs/:/app/logs/
     environment:
       - POSTGRESQL_URL=postgres://postgres:popo@postgres:5432/capi
       - REDIS_URL=redis://redis:6379/0

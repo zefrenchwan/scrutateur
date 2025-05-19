@@ -177,34 +177,48 @@ type AuthRulesEngine struct {
 
 // CanAccessResource returns true and roles for user if user may access, false and nil otherwise. Error if any as the last value
 func (re *AuthRulesEngine) CanAccessResource(url string) (bool, []dto.GrantRole, error) {
+	regexpValidator := regexp.MustCompile(REGEXP_URL_PART)
 	for _, condition := range re.Conditions {
-		template_url := condition.Template
-		expected_roles := condition.UserRoles
+		templateUrl := condition.Template
+		expectedRoles := condition.UserRoles
 		switch condition.Operator {
 		case dto.OperatorEquals:
-			if template_url == url {
-				return true, expected_roles, nil
+			if templateUrl == url {
+				return true, expectedRoles, nil
 			}
 		case dto.OperatorStartsWith:
-			if strings.HasPrefix(url, template_url) {
-				return true, expected_roles, nil
+			if strings.HasPrefix(url, templateUrl) {
+				return true, expectedRoles, nil
 			}
 		case dto.OperatorContains:
-			if strings.Contains(url, template_url) {
-				return true, expected_roles, nil
+			if strings.Contains(url, templateUrl) {
+				return true, expectedRoles, nil
 			}
 		case dto.OperatorMatches:
 			localTest := true
+			urlParts := strings.Split(url, "/")
+			templateParts := strings.Split(templateUrl, "/")
+			size := len(urlParts)
+
 			// test first that there is exactly the same amount of / parts
-			if len(strings.Split(url, "/")) != len(strings.Split(template_url, "/")) {
+			if size != len(templateParts) {
 				localTest = false
+			} else {
+				for index, value := range urlParts {
+					if !localTest {
+						break
+					}
+					templatePart := templateParts[index]
+					if templatePart == "*" {
+						localTest = regexpValidator.MatchString(value)
+					} else {
+						localTest = (value == templatePart)
+					}
+				}
 			}
-			// replace * with \S+ and apply golang regexp
-			template_url = strings.ReplaceAll(template_url, "*", "\\S+")
-			if res, err := regexp.MatchString(template_url, url); err != nil {
-				localTest = false
-			} else if localTest && res {
-				return true, expected_roles, nil
+
+			if localTest {
+				return true, expectedRoles, nil
 			}
 		}
 	}

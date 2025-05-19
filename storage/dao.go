@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"log"
 
 	"github.com/zefrenchwan/scrutateur.git/dto"
 )
@@ -13,19 +14,20 @@ type DaoOptions struct {
 
 // Dao decorates any storage system (relational, cache, etc)
 type Dao struct {
-	rdb   DbStorage
-	cache CacheStorage
+	rdb    DbStorage
+	cache  CacheStorage
+	logger *log.Logger
 }
 
 // NewDao returns a new dao for those connection parameters
-func NewDao(options DaoOptions) (Dao, error) {
+func NewDao(options DaoOptions, logger *log.Logger) (Dao, error) {
 	var dao Dao
 	if db, err := NewDbStorage(options.PostgresqlURL); err != nil {
 		return dao, err
 	} else if cacheClient, err := NewCacheStorage(options.RedisURL); err != nil {
 		return dao, err
 	} else {
-		return Dao{rdb: db, cache: cacheClient}, nil
+		return Dao{rdb: db, cache: cacheClient, logger: logger}, nil
 	}
 }
 
@@ -35,6 +37,11 @@ func (d *Dao) Close() {
 		d.rdb.Close()
 		d.cache.Close()
 	}
+}
+
+// Log logs info for dao
+func (d *Dao) Log(messages ...any) {
+	d.logger.Println(messages...)
 }
 
 // ValidateUser returns true if login and password are a valid user auth info.

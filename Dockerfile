@@ -12,7 +12,9 @@ COPY storage/ ./storage/
 COPY dto/ ./dto/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux go build -o /main
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/main
+
+RUN mkdir /app/logs/
 
 # Run
-CMD ["/main"]
+CMD ["/app/main"]
