@@ -16,7 +16,11 @@ Expected result should look like
 
 ```
 Hello root (took  32.0662ms )
+...
 ```
+
+
+Any failure in that part means a feature at least is not available.
 
 ### Steps before pushing to production 
 
@@ -61,7 +65,12 @@ Security features so far:
 
 ### Client
 
-There is a golang client to perform client calls 
+There is a golang client to perform client calls. 
+Available operations so far: 
+* login 
+* set password
+* display current user name
+* add user (needs admin role) and delete user (root only)
 
 ## Architecture
 
