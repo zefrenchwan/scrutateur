@@ -55,7 +55,8 @@ begin
     end loop;
 end;$$;
 
--- auth.grant_group_access_to_user sets role for that group of resources for that user
+-- auth.grant_group_access_to_user sets role for that group of resources for that user. 
+-- NOTE THAT: it does not append, it sets. Previous grant values are deleted
 create or replace procedure auth.grant_group_access_to_user(p_user text, p_roles text[], p_group text) language plpgsql as $$
 declare 
     l_user_id int = -1;
@@ -108,4 +109,16 @@ begin
         select distinct VGR.operator, VGR.template_url, VGR.roles
         from auth.v_granted_resources VGR
         where VGR.user_login = p_user ;
+end;$$;
+
+-- Given an user (per login), gets all groups and grant access for that users
+create or replace function auth.get_groups_auths_for_user(p_user text) returns table(group_name text, roles text[]) language plpgsql as $$
+begin
+    return query 
+        select GRA.group_name, array_agg(distinct ROL.role_name::text) as roles
+        from auth.users USR 
+        join auth.grants GRA on GRA.user_id = USR.user_id 
+        join auth.roles ROL on ROL.role_id = GRA.role_id
+        where USR.user_login = p_user
+        group by GRA.group_name;
 end;$$;

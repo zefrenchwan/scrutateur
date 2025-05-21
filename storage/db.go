@@ -122,6 +122,36 @@ func (d DbStorage) DeleteUser(ctx context.Context, username string) error {
 	return err
 }
 
+// GetUserGrantAccessPerGroup returns, for each resources group, all roles for that group that the user was granted
+func (d DbStorage) GetUserGrantAccessPerGroup(ctx context.Context, username string) (map[string][]dto.GrantRole, error) {
+	result := make(map[string][]dto.GrantRole)
+	if rows, err := d.db.Query(ctx, "select group_name, roles from auth.get_groups_auths_for_user($1)", username); err != nil {
+		return result, err
+	} else if rows == nil {
+		return result, nil
+	} else {
+		defer rows.Close()
+
+		for rows.Next() {
+			if rows.Err() != nil {
+				return result, err
+			}
+
+			var group string
+			roles := []string{}
+			if err := rows.Scan(&group, &roles); err != nil {
+				return result, err
+			} else if parsedRoles, err := dto.ParseGrantRoles(roles); err != nil {
+				return result, err
+			} else {
+				result[group] = parsedRoles
+			}
+		}
+	}
+
+	return result, nil
+}
+
 // GrantAccessToGroupOfResources sets roles for user to that group of resources
 func (d DbStorage) GrantAccessToGroupOfResources(ctx context.Context, username string, roles []dto.GrantRole, group string) error {
 	if len(roles) == 0 {

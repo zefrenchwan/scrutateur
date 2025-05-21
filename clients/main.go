@@ -18,8 +18,12 @@ func main() {
 	identity, errDetails := session.GetUsername()
 	if errDetails != nil {
 		panic(errDetails)
+	} else if rolesPerResource, err := session.GetUserRoles(identity); err != nil {
+		panic(err)
 	} else {
 		fmt.Println("Hello "+identity, "(took ", time.Since(connectionStart), ")")
+		fmt.Println("current roles: ", rolesPerResource)
+		fmt.Println()
 	}
 
 	connectionStart = time.Now()

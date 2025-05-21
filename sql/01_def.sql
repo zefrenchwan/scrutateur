@@ -78,7 +78,7 @@ create table auth.grants (
 -- auth.v_granted_resources gets login of user, resource operator, template and then roles the user has on this resource 
 create view auth.v_granted_resources as
 with granted_roles as (
-    select USR.user_id, GRA.group_name, array_agg(ROL.role_name::text) as user_roles
+    select USR.user_id, GRA.group_name, array_agg(distinct ROL.role_name::text) as user_roles
     from auth.users USR 
     join auth.grants GRA on GRA.user_id = USR.user_id 
     join auth.roles ROL on ROL.role_id = GRA.role_id  

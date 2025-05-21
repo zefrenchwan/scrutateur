@@ -97,3 +97,33 @@ func (c *ClientSession) DeleteUser(username string) error {
 	_, err := c.callEndpoint("DELETE", CONNECTION_BASE+"root/user/delete/"+username, "")
 	return err
 }
+
+// GetUserRoles gets the resources and linked roles for current user (needs admin or root)
+func (c *ClientSession) GetUserRoles(username string) (map[string][]string, error) {
+	result := make(map[string][]string)
+	var loaded map[string]any
+	if payload, err := c.callEndpoint("GET", CONNECTION_BASE+"admin/user/roles/"+username, ""); err != nil {
+		return nil, err
+	} else if err := json.Unmarshal([]byte(payload), &loaded); err != nil {
+		return nil, err
+	} else {
+		for group, v := range loaded {
+			if values, ok := v.([]any); !ok {
+				return nil, fmt.Errorf("malformed input")
+			} else {
+				var roles []string
+				for _, value := range values {
+					if role, ok := value.(string); !ok {
+						return nil, fmt.Errorf("malformed input")
+					} else {
+						roles = append(roles, role)
+					}
+				}
+
+				result[group] = roles
+			}
+		}
+	}
+
+	return result, nil
+}

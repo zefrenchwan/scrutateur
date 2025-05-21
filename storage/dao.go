@@ -68,6 +68,11 @@ func (d *Dao) GetUserGrantedAccess(context context.Context, user string) ([]dto.
 	return d.rdb.GetUserGrantedAccess(context, user)
 }
 
+// GetUserGrantAccessPerGroup returns, for each resources group, all roles for that group that the user was granted
+func (d *Dao) GetUserGrantAccessPerGroup(ctx context.Context, username string) (map[string][]dto.GrantRole, error) {
+	return d.rdb.GetUserGrantAccessPerGroup(ctx, username)
+}
+
 // UpsertUser creates an user in database with that password if it does not exist, or changes current password
 func (d *Dao) UpsertUser(ctx context.Context, username, password string) error {
 	return d.rdb.UpsertUser(ctx, username, password)

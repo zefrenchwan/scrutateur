@@ -83,6 +83,10 @@ func (s *Server) Init() {
 		s.endpointAdminCreateUser(c)
 	})
 
+	s.engine.GET("/admin/user/roles/:username", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
+		s.endpointAdminUserRolesPerGroup(c)
+	})
+
 	///////////////////////////////////////////////////////////////////////////////////////
 	// GROUP ROOT: CRITICAL OPERATIONS THAT DEAL WITH ADMIN ACCESS OR USER RISKY ACTIONS //
 	///////////////////////////////////////////////////////////////////////////////////////
