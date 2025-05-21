@@ -1,13 +1,11 @@
 package services
 
 import (
-	"context"
 	"log"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/zefrenchwan/scrutateur.git/dto"
 	"github.com/zefrenchwan/scrutateur.git/storage"
 )
 
@@ -95,10 +93,4 @@ func (s *Server) Init() {
 // Run starts the server
 func (s *Server) Run(port int) {
 	s.engine.Run(":" + strconv.Itoa(port))
-}
-
-// SessionLoad loads session for that context
-func (s *Server) SessionLoad(c *gin.Context) (dto.Session, error) {
-	sessionId := c.Request.Header.Get("session-id")
-	return s.dao.GetSessionForUser(context.Background(), sessionId)
 }

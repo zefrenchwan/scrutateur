@@ -50,18 +50,14 @@ func (d *Dao) ValidateUser(ctx context.Context, login string, password string) (
 	return d.rdb.ValidateUser(ctx, login, password)
 }
 
-// SetSessionForUser registers a session
-func (d *Dao) SetSessionForUser(context context.Context, sessionId string, session dto.Session) error {
-	return d.cache.SetSessionForUser(context, sessionId, session)
+// SetValue sets value in a cache
+func (d *Dao) SetValue(context context.Context, key, value string) error {
+	return d.cache.SetValue(context, key, value)
 }
 
-// GetSessionForUser gets a session by id
-func (d *Dao) GetSessionForUser(context context.Context, sessionId string) (dto.Session, error) {
-	if raw, err := d.cache.GetSessionForUser(context, sessionId); err != nil {
-		return dto.Session{}, err
-	} else {
-		return dto.SessionLoad(raw)
-	}
+// GetValue gets value by key in a cache
+func (d *Dao) GetValue(context context.Context, key string) (string, error) {
+	return d.cache.GetValue(context, key)
 }
 
 // GetUserGrantedAccess returns, for a user, all the rules conditions to access a resource

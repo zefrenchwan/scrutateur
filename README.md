@@ -77,7 +77,7 @@ Available operations so far:
 
 1. endpoints are either unprotected (login and status) or protected (with an auth check mechanism and access to pages are based on roles)
 2. Storage for auth is based on a relational database. 
-3. Sessions are based on a cache, a session-id header is expected once user is connected
+3. Although not used, a redis cache is provided
 
 ### Dependencies
 

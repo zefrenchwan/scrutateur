@@ -56,18 +56,6 @@ func (s *Server) Login(c *gin.Context) {
 		newToken = token
 	}
 
-	// set session id value
-	newSessionId := NewSecret()
-	session := dto.NewSessionForUser(auth.Login)
-	if err := s.dao.SetSessionForUser(context.Background(), newSessionId, session); err != nil {
-		fmt.Println(err)
-		c.String(http.StatusInternalServerError, "Cannot store session")
-		return
-	}
-
-	// session creation went fine, so
-	c.Header("session-id", newSessionId)
-
 	// user auth is valid
 	c.Writer.Header().Add("Authorization", "Bearer "+newToken)
 	c.JSON(http.StatusAccepted, "Hello "+auth.Login)
@@ -127,27 +115,12 @@ func (s *Server) AuthenticationMiddleware() gin.HandlerFunc {
 		// get rid of "Bearer " to get only the token
 		tokenString = tokenString[len("Bearer "):]
 
-		var username string
 		// Either token is valid and we know the user, or we stop right here
 		if login, err := VerifyToken(s.secret, tokenString); err != nil {
 			c.AbortWithError(http.StatusUnauthorized, fmt.Errorf("invalid token: %s", err.Error()))
 			return
 		} else {
-			username = login
-		}
-
-		// TOKEN IS VALID AND USER IS KNOWN
-		// Now we want to check user session
-		sessionId := c.Request.Header.Get("session-id")
-		// check that session id fits that user
-		if session, err := s.dao.GetSessionForUser(context.Background(), sessionId); err != nil {
-			c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("session loading failure: %s", err.Error()))
-			c.Abort()
-			return
-		} else if session.CurrentUser != username {
-			c.AbortWithError(http.StatusUnauthorized, fmt.Errorf("session mismatch"))
-			c.Abort()
-			return
+			c.Set("login", login)
 		}
 
 		// All security tests passed
@@ -163,7 +136,7 @@ func (s *Server) AuthenticationMiddleware() gin.HandlerFunc {
 
 		// add auth and session
 		c.Header("Authorization", "Bearer "+tokenString)
-		c.Header("session-id", sessionId)
+		c.Header("session-id", uuid.NewString())
 
 		c.Next()
 	}
@@ -226,21 +199,18 @@ func (re *AuthRulesEngine) CanAccessResource(url string) (bool, []dto.GrantRole,
 func (s *Server) RolesBasedMiddleware() gin.HandlerFunc {
 	// this function tests the token, test session and then sets main headers
 	return func(c *gin.Context) {
-		if session, err := s.SessionLoad(c); err != nil {
+		if login, found := c.Get("login"); !found {
+			c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("no user found"))
+		} else if conditions, err := s.dao.GetUserGrantedAccess(context.Background(), login.(string)); err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
-			c.Abort()
-		} else if conditions, err := s.dao.GetUserGrantedAccess(context.Background(), session.CurrentUser); err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-			c.Abort()
 		} else {
 			engine := AuthRulesEngine{Conditions: conditions}
-			if accept, _, err := engine.CanAccessResource(c.Request.URL.Path); err != nil {
+			if accept, roles, err := engine.CanAccessResource(c.Request.URL.Path); err != nil {
 				c.AbortWithError(http.StatusInternalServerError, err)
-				c.Abort()
 			} else if !accept {
 				c.AbortWithError(http.StatusUnauthorized, fmt.Errorf("cannot access %s due to missing permissions", c.Request.RequestURI))
-				c.Abort()
 			} else {
+				c.Set("roles", roles)
 				c.Next()
 			}
 		}

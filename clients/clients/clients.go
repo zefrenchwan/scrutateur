@@ -12,7 +12,6 @@ const CONNECTION_BASE = "http://localhost:3000/"
 
 // ClientSession has the main info to use the application: session id and authentication token
 type ClientSession struct {
-	sessionId      string
 	authentication string
 }
 
@@ -27,7 +26,6 @@ func Connect(login, password string) (ClientSession, error) {
 	if resp, err := http.Post(CONNECTION_BASE+"login", "application/json", bytes.NewReader(payload)); err != nil {
 		return result, err
 	} else {
-		result.sessionId = resp.Header.Get("session-id")
 		result.authentication = resp.Header.Get("Authorization")
 		return result, nil
 	}
@@ -51,7 +49,6 @@ func (c *ClientSession) callEndpoint(method, url string, body string) (string, e
 	request.Header = http.Header{
 		"Content-Type":  {"application/json"},
 		"Authorization": {c.authentication},
-		"session-id":    {c.sessionId},
 	}
 
 	if resp, err := client.Do(request); err != nil {
