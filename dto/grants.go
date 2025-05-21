@@ -63,7 +63,6 @@ type GrantOperator string
 const (
 	OperatorEquals     GrantOperator = "EQUALS"
 	OperatorStartsWith GrantOperator = "STARTS_WITH"
-	OperatorContains   GrantOperator = "CONTAINS"
 	OperatorMatches    GrantOperator = "MATCHES"
 )
 
@@ -74,8 +73,6 @@ func ParseGrantOperator(value string) (GrantOperator, error) {
 		return OperatorEquals, nil
 	case string(OperatorStartsWith):
 		return OperatorStartsWith, nil
-	case string(OperatorContains):
-		return OperatorContains, nil
 	case string(OperatorMatches):
 		return OperatorMatches, nil
 	}

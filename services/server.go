@@ -76,22 +76,19 @@ func (s *Server) Init() {
 		s.endpointChangePassword(c)
 	})
 
-	////////////////////////////////////////////////////////////////
-	// GROUP ADMIN: DEAL WITH USER ACCESS FOR READING AND EDITION //
-	////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////
+	// GROUP MANAGEMENT: DEAL WITH USER ACCESS //
+	/////////////////////////////////////////////
 	s.engine.POST("/admin/user/create", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
 		s.endpointAdminCreateUser(c)
 	})
 
-	s.engine.GET("/admin/user/roles/:username", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
-		s.endpointAdminUserRolesPerGroup(c)
-	})
-
-	///////////////////////////////////////////////////////////////////////////////////////
-	// GROUP ROOT: CRITICAL OPERATIONS THAT DEAL WITH ADMIN ACCESS OR USER RISKY ACTIONS //
-	///////////////////////////////////////////////////////////////////////////////////////
 	s.engine.DELETE("/root/user/delete/:username", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
 		s.endpointRootDeleteUser(c)
+	})
+
+	s.engine.GET("/admin/user/roles/:username", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
+		s.endpointAdminUserRolesPerGroup(c)
 	})
 }
 

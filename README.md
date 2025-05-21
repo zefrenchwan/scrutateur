@@ -47,6 +47,7 @@ Any failure in that part means a feature at least is not available.
 #### Admin operations on users
 
 * **/admin/user/create** creates an user (with no role)
+* **/admin/user/roles/{username}** displays groups and matching roles for a given user
 
 #### Root operations on users
 

@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/zefrenchwan/scrutateur.git/dto"
@@ -85,6 +86,10 @@ func (d *Dao) DeleteUser(ctx context.Context, username string) error {
 
 // GrantAccessToGroupOfResources sets roles for user to that group of resources
 func (d *Dao) GrantAccessToGroupOfResources(ctx context.Context, username string, roles []dto.GrantRole, group string) error {
+	if len(roles) == 0 {
+		return fmt.Errorf("to grant access, one role at least is necessary")
+	}
+
 	return d.rdb.GrantAccessToGroupOfResources(ctx, username, roles, group)
 }
 

@@ -190,10 +190,6 @@ func (re *AuthRulesEngine) CanAccessResource(url string) (bool, []dto.GrantRole,
 			if strings.HasPrefix(url, templateUrl) {
 				return true, expectedRoles, nil
 			}
-		case dto.OperatorContains:
-			if strings.Contains(url, templateUrl) {
-				return true, expectedRoles, nil
-			}
 		case dto.OperatorMatches:
 			localTest := true
 			urlParts := strings.Split(url, "/")
