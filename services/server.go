@@ -68,26 +68,26 @@ func (s *Server) Init() {
 	//////////////////////////////////////////////////////////////////////////////
 	s.engine.GET("/user/whoami", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
 		s.endpointUserInformation(c)
-	})
+	}, CleanupContext)
 
 	s.engine.POST("/user/password", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
 		s.endpointChangePassword(c)
-	})
+	}, CleanupContext)
 
 	/////////////////////////////////////////////
 	// GROUP MANAGEMENT: DEAL WITH USER ACCESS //
 	/////////////////////////////////////////////
 	s.engine.POST("/admin/user/create", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
 		s.endpointAdminCreateUser(c)
-	})
+	}, CleanupContext)
 
 	s.engine.DELETE("/root/user/delete/:username", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
 		s.endpointRootDeleteUser(c)
-	})
+	}, CleanupContext)
 
 	s.engine.GET("/admin/user/roles/:username", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
 		s.endpointAdminUserRolesPerGroup(c)
-	})
+	}, CleanupContext)
 }
 
 // Run starts the server

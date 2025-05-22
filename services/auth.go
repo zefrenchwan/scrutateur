@@ -217,3 +217,10 @@ func (s *Server) RolesBasedMiddleware() gin.HandlerFunc {
 		}
 	}
 }
+
+// CleanupContext will clean any critical information in the context
+func CleanupContext(c *gin.Context) {
+	c.Set("login", "")
+	c.Set("roles", nil)
+	c.Next()
+}
