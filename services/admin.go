@@ -19,16 +19,12 @@ func (s *Server) endpointAdminCreateUser(c *gin.Context) {
 	var content UserCreationContent
 	if err := c.ShouldBindBodyWithJSON(&content); err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
-		c.Abort()
 	} else if !ValidateUsernameFormat(content.Username) {
 		c.AbortWithError(http.StatusForbidden, fmt.Errorf("invalid username format"))
-		c.Abort()
 	} else if !ValidateUserpasswordFormat(content.Password) {
 		c.AbortWithError(http.StatusForbidden, fmt.Errorf("invalid password format"))
-		c.Abort()
 	} else if err := s.dao.UpsertUser(context.Background(), content.Username, content.Password); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
-		c.Abort()
 	} else {
 		c.Status(http.StatusOK)
 		c.Next()
@@ -40,16 +36,12 @@ func (s *Server) endpointAdminUserRolesPerGroup(c *gin.Context) {
 	username := c.Param("username")
 	if len(username) == 0 {
 		c.AbortWithError(http.StatusBadRequest, fmt.Errorf("missing username for user roles information"))
-		c.Abort()
 	} else if !ValidateUsernameFormat(username) {
 		c.AbortWithError(http.StatusForbidden, fmt.Errorf("invalid username format"))
-		c.Abort()
 	} else if values, err := s.dao.GetUserGrantAccessPerGroup(context.Background(), username); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
-		c.Abort()
 	} else if len(values) == 0 {
 		c.AbortWithError(http.StatusNotFound, fmt.Errorf("no matching user for %s", username))
-		c.Abort()
 	} else {
 		c.JSON(http.StatusOK, values)
 		c.Next()
