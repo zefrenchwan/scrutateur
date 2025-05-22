@@ -3,6 +3,11 @@ Backend server to deal with patterns.
 
 ## Installation 
 
+### Configure options
+
+If you add `REDIS_URL` as an environment variable, then you may use a redis cache in your code. 
+Otherwise, code will only use a relational database (mandatory). 
+
 ### With docker compose 
 start docker instances with compose: `docker compose -f 'compose.yaml' up -d --build`
 
@@ -56,13 +61,10 @@ Any failure in that part means a feature at least is not available.
 ### Security
 
 This project is not intented to run on production as is. 
-Code deals with basic security (just enough not to be ridiculous) and focuses more on features. 
-Weak points are secrets protection and default user mechanism. 
+Code deals with basic security (roles, input validation, jwt) but was not audited or approved by a security expert.  
+Weak points are secrets protection (no salt) and default user mechanism (root configuration by default). 
 **Adapt my code for your context, contact your administrator or security expert before pushing any of this code to production**
 
-Security features so far:
-* Role based mechanism
-* user auth based on JWT, password is stored as a sha256 hash, no salt
 
 ### Client
 
@@ -72,12 +74,13 @@ Available operations so far:
 * set password
 * display current user name
 * add user (needs admin role) and delete user (root only)
+* display roles for user (admin)
 
 ## Architecture
 
 1. endpoints are either unprotected (login and status) or protected (with an auth check mechanism and access to pages are based on roles)
 2. Storage for auth is based on a relational database. 
-3. Although not used, a redis cache is provided
+3. Although not used, a redis cache is provided and may be set to active via a configuration mode
 
 ### Dependencies
 
@@ -89,7 +92,7 @@ To create go.mod, actions were:
 5. go get github.com/google/uuid
 6. go get github.com/redis/go-redis/v9   
 
-### The security model 
+### The roles model 
 
 Users have a login and a password to prove their identity. 
 Roles define what an user may do: grant or not, read or write. 
@@ -115,3 +118,9 @@ Users have roles too, on a group of resources.
 
 * Role based model
 * input validators to prevent sql injection 
+
+### I want to create a page, what are the main steps ?
+
+1. Add your endpoint in `services` and link it to the `Init` function in services
+2. Manage access into `03_content.sql` (the TODO part)
+3. Add clients code in `clients/clients.go`

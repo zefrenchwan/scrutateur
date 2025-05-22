@@ -8,7 +8,8 @@ services:
       - ./logs/:/app/logs/
     environment:
       - POSTGRESQL_URL=postgres://postgres:popo@postgres:5432/capi
-      - REDIS_URL=redis://redis:6379/0
+      # UNCOMMENT NEXT LINE TO ACTIVATE REDIS CACHE
+      #- REDIS_URL=redis://redis:6379/0
     depends_on:
       - postgres
       - redis

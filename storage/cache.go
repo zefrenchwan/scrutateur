@@ -45,7 +45,7 @@ func (c *CacheStorage) GetValue(context context.Context, key string) (string, er
 
 // Close closes the connection to the cache
 func (c *CacheStorage) Close() {
-	if c != nil {
+	if c != nil && c.client != nil {
 		c.client.Close()
 	}
 }

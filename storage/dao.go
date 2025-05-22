@@ -23,8 +23,13 @@ type Dao struct {
 // NewDao returns a new dao for those connection parameters
 func NewDao(options DaoOptions, logger *log.Logger) (Dao, error) {
 	var dao Dao
-	if db, err := NewDbStorage(options.PostgresqlURL); err != nil {
+	if len(options.PostgresqlURL) == 0 {
+		return dao, fmt.Errorf("missing postgres configuration")
+	} else if db, err := NewDbStorage(options.PostgresqlURL); err != nil {
 		return dao, err
+	} else if len(options.RedisURL) == 0 {
+		logger.Println("REDIS CACHE INACTIVE. Dao will only manage relational database")
+		return Dao{rdb: db, logger: logger}, nil
 	} else if cacheClient, err := NewCacheStorage(options.RedisURL); err != nil {
 		return dao, err
 	} else {

@@ -59,6 +59,7 @@ func (s *Server) Login(c *gin.Context) {
 	// user auth is valid
 	c.Writer.Header().Add("Authorization", "Bearer "+newToken)
 	c.JSON(http.StatusAccepted, "Hello "+auth.Login)
+	c.Next()
 }
 
 // CreateToken creates a string token for a given user, based on a secret.
