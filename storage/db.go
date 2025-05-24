@@ -74,6 +74,33 @@ func (d *DbStorage) ValidateUser(ctx context.Context, login string, password str
 	}
 }
 
+// GetGroups returns all the resources group names
+func (d *DbStorage) GetGroups(ctx context.Context) ([]string, error) {
+	var result []string
+	if rows, err := d.db.Query(ctx, "select distinct group_name from auth.resources order by group_name asc"); err != nil {
+		return result, err
+	} else if rows == nil {
+		return result, nil
+	} else {
+		defer rows.Close()
+
+		for rows.Next() {
+			if rows.Err() != nil {
+				return result, err
+			}
+
+			var group string
+			if err := rows.Scan(&group); err != nil {
+				return result, err
+			} else {
+				result = append(result, group)
+			}
+		}
+	}
+
+	return result, nil
+}
+
 // GetUserGrantedAccess gets all the grants access for a user
 func (d DbStorage) GetUserGrantedAccess(ctx context.Context, user string) ([]dto.GrantAccessForResource, error) {
 	var result []dto.GrantAccessForResource

@@ -65,6 +65,11 @@ func (d *Dao) GetValue(context context.Context, key string) (string, error) {
 	return d.cache.GetValue(context, key)
 }
 
+// GetGroups returns all the resources group names (ordered by name)
+func (d *Dao) GetGroups(ctx context.Context) ([]string, error) {
+	return d.rdb.GetGroups(ctx)
+}
+
 // GetUserGrantedAccess returns, for a user, all the rules conditions to access a resource
 func (d *Dao) GetUserGrantedAccess(context context.Context, user string) ([]dto.GrantAccessForResource, error) {
 	return d.rdb.GetUserGrantedAccess(context, user)
