@@ -91,15 +91,25 @@ func (c *ClientSession) AddUser(username, password string) error {
 
 // DeleteUser deletes user by login
 func (c *ClientSession) DeleteUser(username string) error {
-	_, err := c.callEndpoint("DELETE", CONNECTION_BASE+"manage/user/delete/"+username, "")
+	if len(username) == 0 {
+		return fmt.Errorf("cannot create user with empty username")
+	}
+
+	path := fmt.Sprintf(CONNECTION_BASE+"manage/user/%s/delete/", username)
+	_, err := c.callEndpoint("DELETE", path, "")
 	return err
 }
 
 // GetUserRoles gets the resources and linked roles for current user (needs admin or root)
 func (c *ClientSession) GetUserRoles(username string) (map[string][]string, error) {
 	result := make(map[string][]string)
+	if len(username) == 0 {
+		return result, fmt.Errorf("cannot get roles of empty user")
+	}
+
+	path := fmt.Sprintf(CONNECTION_BASE+"manage/user/%s/access/list", username)
 	var loaded map[string]any
-	if payload, err := c.callEndpoint("GET", CONNECTION_BASE+"manage/user/roles/"+username, ""); err != nil {
+	if payload, err := c.callEndpoint("GET", path, ""); err != nil {
 		return nil, err
 	} else if err := json.Unmarshal([]byte(payload), &loaded); err != nil {
 		return nil, err

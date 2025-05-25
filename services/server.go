@@ -81,11 +81,11 @@ func (s *Server) Init() {
 		s.endpointAdminCreateUser(c)
 	})
 
-	s.engine.DELETE("/manage/user/delete/:username", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
+	s.engine.DELETE("/manage/user/:username/delete", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
 		s.endpointRootDeleteUser(c)
 	})
 
-	s.engine.GET("/manage/user/roles/:username", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
+	s.engine.GET("/manage/user/:username/access/list", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
 		s.endpointAdminUserRolesPerGroup(c)
 	})
 }
