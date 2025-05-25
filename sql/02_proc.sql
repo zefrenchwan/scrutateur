@@ -71,9 +71,9 @@ begin
 
     delete from auth.grants where user_id = l_user_id and group_name = p_group;
 
-    foreach l_role slice 1 in array p_roles loop 
+    foreach l_role in array p_roles loop 
         select role_id into l_role_id from auth.roles where role_name = l_role;
-        if role_id is null or role_id = -1 then 
+        if l_role_id is null or l_role_id = -1 then 
             raise exception 'no matching role for %', l_role;
         end if;
 
@@ -88,9 +88,9 @@ declare
     l_user_id int;
 begin 
 
-    select user_id from auth.users where user_login = p_user;
+    select user_id into l_user_id from auth.users where user_login = p_user;
 
-    if user_id is not null and user_id > 0 then 
+    if l_user_id is not null and l_user_id > 0 then 
         delete from auth.grants where user_id = l_user_id and group_name = p_group;
     end if;
 

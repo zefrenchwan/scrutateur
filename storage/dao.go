@@ -45,14 +45,14 @@ func (d *Dao) Close() {
 	}
 }
 
-// Log logs info for dao
-func (d *Dao) Log(messages ...any) {
-	d.logger.Println(messages...)
-}
-
 // ValidateUser returns true if login and password are a valid user auth info.
 func (d *Dao) ValidateUser(ctx context.Context, login string, password string) (bool, error) {
-	return d.rdb.ValidateUser(ctx, login, password)
+	if resp, err := d.rdb.ValidateUser(ctx, login, password); err != nil {
+		d.logger.Println("DAO: ERROR", err)
+		return false, err
+	} else {
+		return resp, err
+	}
 }
 
 // SetValue sets value in a cache
@@ -67,39 +67,84 @@ func (d *Dao) GetValue(context context.Context, key string) (string, error) {
 
 // GetGroups returns all the resources group names (ordered by name)
 func (d *Dao) GetGroups(ctx context.Context) ([]string, error) {
-	return d.rdb.GetGroups(ctx)
+	if resp, err := d.rdb.GetGroups(ctx); err != nil {
+		d.logger.Println("DAO: ERROR", err)
+		return nil, err
+	} else {
+		return resp, err
+	}
 }
 
 // GetUserGrantedAccess returns, for a user, all the rules conditions to access a resource
 func (d *Dao) GetUserGrantedAccess(context context.Context, user string) ([]dto.GrantAccessForResource, error) {
-	return d.rdb.GetUserGrantedAccess(context, user)
+	if resp, err := d.rdb.GetUserGrantedAccess(context, user); err != nil {
+		d.logger.Println("DAO: ERROR", err)
+		return nil, err
+	} else {
+		return resp, err
+	}
 }
 
 // GetUserGrantAccessPerGroup returns, for each resources group, all roles for that group that the user was granted
 func (d *Dao) GetUserGrantAccessPerGroup(ctx context.Context, username string) (map[string][]dto.GrantRole, error) {
-	return d.rdb.GetUserGrantAccessPerGroup(ctx, username)
+	if resp, err := d.rdb.GetUserGrantAccessPerGroup(ctx, username); err != nil {
+		d.logger.Println("DAO: ERROR", err)
+		return nil, err
+	} else {
+		return resp, err
+	}
 }
 
 // UpsertUser creates an user in database with that password if it does not exist, or changes current password
 func (d *Dao) UpsertUser(ctx context.Context, username, password string) error {
-	return d.rdb.UpsertUser(ctx, username, password)
+	if err := d.rdb.UpsertUser(ctx, username, password); err != nil {
+		d.logger.Println("DAO: ERROR", err)
+		return err
+	} else {
+		return err
+	}
 }
 
 // DeleteUser deletes user regardless user's access rights
 func (d *Dao) DeleteUser(ctx context.Context, username string) error {
-	return d.rdb.DeleteUser(ctx, username)
+	if err := d.rdb.DeleteUser(ctx, username); err != nil {
+		d.logger.Println("DAO: ERROR", err)
+		return err
+	} else {
+		return err
+	}
 }
 
 // GrantAccessToGroupOfResources sets roles for user to that group of resources
 func (d *Dao) GrantAccessToGroupOfResources(ctx context.Context, username string, roles []dto.GrantRole, group string) error {
 	if len(roles) == 0 {
 		return fmt.Errorf("to grant access, one role at least is necessary")
+	} else if err := d.rdb.GrantAccessToGroupOfResources(ctx, username, roles, group); err != nil {
+		d.logger.Println("DAO: ERROR", err)
+		return err
+	} else {
+		return err
 	}
+}
 
-	return d.rdb.GrantAccessToGroupOfResources(ctx, username, roles, group)
+// GrantAccess sets access on groups for a given user.
+// The access parameter is a map of groups (should exist) and values are the roles to set.
+// Note that roles are the only roles set (no append)
+func (d *Dao) GrantAccess(ctx context.Context, username string, access map[string][]dto.GrantRole) error {
+	if err := d.rdb.GrantAccessBatch(ctx, username, access); err != nil {
+		d.logger.Println("DAO: ERROR", err)
+		return err
+	} else {
+		return err
+	}
 }
 
 // RemoveAccessToGroupOfResources removes access rights for that user to a given group of resources
 func (d *Dao) RemoveAccessToGroupOfResources(ctx context.Context, username string, group string) error {
-	return d.rdb.RemoveAccessToGroupOfResources(ctx, username, group)
+	if err := d.rdb.RemoveAccessToGroupOfResources(ctx, username, group); err != nil {
+		d.logger.Println("DAO: ERROR", err)
+		return err
+	} else {
+		return err
+	}
 }

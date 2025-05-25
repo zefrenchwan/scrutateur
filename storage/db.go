@@ -194,8 +194,39 @@ func (d DbStorage) GrantAccessToGroupOfResources(ctx context.Context, username s
 	return err
 }
 
+func (d DbStorage) GrantAccessBatch(ctx context.Context, username string, access map[string][]dto.GrantRole) error {
+	if transaction, err := d.db.Begin(ctx); err != nil {
+		return err
+	} else {
+		for group, roles := range access {
+			if len(roles) != 0 {
+				// grant access
+				mapping := make([]string, len(roles))
+				for index, value := range roles {
+					mapping[index] = string(value)
+				}
+
+				if _, err := d.db.Exec(ctx, "call  auth.grant_group_access_to_user($1,$2,$3)", username, mapping, group); err != nil {
+					transaction.Rollback(ctx)
+					return err
+				}
+
+			} else if _, err := transaction.Exec(ctx, "call auth.remove_access_from_group_to_user($1,$2)", username, group); err != nil {
+				transaction.Rollback(ctx)
+				return err
+			}
+		}
+
+		if err := transaction.Commit(ctx); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // RemoveAccessToGroupOfResources removes access rights for that user to a given group of resources
 func (d DbStorage) RemoveAccessToGroupOfResources(ctx context.Context, username string, group string) error {
-	_, err := d.db.Exec(ctx, "call  auth.remove_access_from_group_to_user($1,$2)", username, group)
+	_, err := d.db.Exec(ctx, "call auth.remove_access_from_group_to_user($1,$2)", username, group)
 	return err
 }

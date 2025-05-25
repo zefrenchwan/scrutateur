@@ -2,9 +2,11 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -31,35 +33,26 @@ func (s *Server) Login(c *gin.Context) {
 		Login    string `form:"login" binding:"required"`
 		Password string `form:"password" binding:"required"`
 	}
+
 	var auth UserAuth
 	if err := c.BindJSON(&auth); err != nil {
-		c.String(http.StatusBadRequest, "expecting login and password")
-		return
-	}
-
-	// validate user auth
-	if valid, err := s.dao.ValidateUser(context.Background(), auth.Login, auth.Password); err != nil {
-		fmt.Println(err)
-		c.String(http.StatusInternalServerError, "Internal error")
+		c.AbortWithError(http.StatusBadRequest, errors.New("expecting login and password"))
+	} else if valid, err := s.dao.ValidateUser(context.Background(), auth.Login, auth.Password); err != nil {
+		// validate user auth
+		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	} else if !valid {
-		c.String(http.StatusUnauthorized, "Authentication failure")
+		c.AbortWithStatus(http.StatusUnauthorized)
 		return
-	}
-
-	var newToken string
-	if token, err := CreateToken(auth.Login, s.secret, s.tokenDuration); err != nil {
-		fmt.Println(err)
-		c.String(http.StatusInternalServerError, "Cannot generate token for user")
+	} else if token, err := CreateToken(auth.Login, s.secret, s.tokenDuration); err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	} else {
-		newToken = token
+		// user auth is valid
+		c.Writer.Header().Add("Authorization", "Bearer "+token)
+		c.JSON(http.StatusAccepted, "Hello "+auth.Login)
+		c.Next()
 	}
-
-	// user auth is valid
-	c.Writer.Header().Add("Authorization", "Bearer "+newToken)
-	c.JSON(http.StatusAccepted, "Hello "+auth.Login)
-	c.Next()
 }
 
 // CreateToken creates a string token for a given user, based on a secret.
@@ -91,14 +84,14 @@ func VerifyToken(secret string, tokenString string) (string, error) {
 	}
 
 	if !token.Valid {
-		return "", fmt.Errorf("invalid token")
+		return "", errors.New("invalid token")
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		user := claims["username"]
 		return user.(string), nil
 	} else {
-		return "", fmt.Errorf("unsupported claim type for JWT token")
+		return "", errors.New("unsupported claim type for JWT token")
 	}
 }
 
@@ -109,7 +102,7 @@ func (s *Server) AuthenticationMiddleware() gin.HandlerFunc {
 		// get the bearer and token as a whole reading the header
 		tokenString := c.Request.Header.Get("Authorization")
 		if tokenString == "" {
-			c.AbortWithError(http.StatusUnauthorized, fmt.Errorf("missing authorization header"))
+			c.AbortWithError(http.StatusUnauthorized, errors.New("missing authorization header"))
 			return
 		}
 
@@ -137,7 +130,6 @@ func (s *Server) AuthenticationMiddleware() gin.HandlerFunc {
 
 		// add auth and session
 		c.Header("Authorization", "Bearer "+tokenString)
-		c.Header("session-id", uuid.NewString())
 
 		c.Next()
 	}
@@ -201,7 +193,7 @@ func (s *Server) RolesBasedMiddleware() gin.HandlerFunc {
 	// this function tests the token, test session and then sets main headers
 	return func(c *gin.Context) {
 		if login, found := c.Get("login"); !found {
-			c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("no user found"))
+			c.AbortWithError(http.StatusInternalServerError, errors.New("no user found"))
 		} else if conditions, err := s.dao.GetUserGrantedAccess(context.Background(), login.(string)); err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 		} else {
@@ -216,4 +208,28 @@ func (s *Server) RolesBasedMiddleware() gin.HandlerFunc {
 			}
 		}
 	}
+}
+
+// MayGrant returns an error if adminAccess ore not sufficient to grant requestedAccess.
+// Parameters are group => roles of user
+func MayGrant(adminAccess map[string][]dto.GrantRole, requestedAccess map[string][]dto.GrantRole) error {
+	if len(adminAccess) == 0 {
+		return errors.New("no admin access")
+	} else if len(requestedAccess) == 0 {
+		return nil
+	} else {
+		for group, roles := range requestedAccess {
+			if len(group) == 0 {
+				return errors.New("empty value")
+			} else if accessRights, found := adminAccess[group]; !found {
+				return fmt.Errorf("cannot grant on group %s", group)
+			} else if !slices.Contains(accessRights, dto.RoleRoot) && !slices.Contains(accessRights, dto.RoleAdmin) {
+				return errors.New("cannot grant access due to insufficient privileges: needs admin or root")
+			} else if slices.Contains(roles, dto.RoleRoot) && !slices.Contains(accessRights, dto.RoleRoot) {
+				return errors.New("cannot grant access due to insufficient privileges: admin cannot grant root")
+			}
+		}
+	}
+
+	return nil
 }

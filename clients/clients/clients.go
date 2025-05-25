@@ -3,6 +3,7 @@ package clients
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -56,6 +57,7 @@ func (c *ClientSession) callEndpoint(method, url string, body string) (string, e
 	} else {
 		defer resp.Body.Close()
 		if resp.StatusCode >= 300 {
+			fmt.Println(resp)
 			return "", fmt.Errorf("invalid call: %s", resp.Status)
 		} else if body, err := io.ReadAll(resp.Body); err != nil {
 			return "", err
@@ -92,7 +94,7 @@ func (c *ClientSession) AddUser(username, password string) error {
 // DeleteUser deletes user by login
 func (c *ClientSession) DeleteUser(username string) error {
 	if len(username) == 0 {
-		return fmt.Errorf("cannot create user with empty username")
+		return errors.New("cannot create user with empty username")
 	}
 
 	path := fmt.Sprintf(CONNECTION_BASE+"manage/user/%s/delete/", username)
@@ -104,7 +106,7 @@ func (c *ClientSession) DeleteUser(username string) error {
 func (c *ClientSession) GetUserRoles(username string) (map[string][]string, error) {
 	result := make(map[string][]string)
 	if len(username) == 0 {
-		return result, fmt.Errorf("cannot get roles of empty user")
+		return result, errors.New("cannot get roles of empty user")
 	}
 
 	path := fmt.Sprintf(CONNECTION_BASE+"manage/user/%s/access/list", username)
@@ -116,12 +118,12 @@ func (c *ClientSession) GetUserRoles(username string) (map[string][]string, erro
 	} else {
 		for group, v := range loaded {
 			if values, ok := v.([]any); !ok {
-				return nil, fmt.Errorf("malformed input")
+				return nil, errors.New("malformed input")
 			} else {
 				var roles []string
 				for _, value := range values {
 					if role, ok := value.(string); !ok {
-						return nil, fmt.Errorf("malformed input")
+						return nil, errors.New("malformed input")
 					} else {
 						roles = append(roles, role)
 					}
@@ -133,4 +135,22 @@ func (c *ClientSession) GetUserRoles(username string) (map[string][]string, erro
 	}
 
 	return result, nil
+}
+
+// SetUserRolesForGroups changes user access for a given user to set those roles for those groups
+func (c *ClientSession) SetUserRolesForGroups(username string, access map[string][]string) error {
+	path := fmt.Sprintf(CONNECTION_BASE+"manage/user/%s/access/edit", username)
+	if len(access) == 0 {
+		return errors.New("nil input not accepted")
+	} else if _, found := access[""]; found {
+		return errors.New("empty group not allowed")
+	} else if body, err := json.Marshal(access); err != nil {
+		return err
+	} else if len(username) == 0 {
+		return errors.New("empty username not accepted")
+	} else if _, err := c.callEndpoint("PUT", path, string(body)); err != nil {
+		return err
+	}
+
+	return nil
 }

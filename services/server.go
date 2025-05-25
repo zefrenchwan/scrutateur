@@ -34,11 +34,6 @@ func NewServer(dao storage.Dao, logger *log.Logger) Server {
 	}
 }
 
-// Log writes log
-func (s *Server) Log(values ...any) {
-	s.logger.Println(values...)
-}
-
 // Status is a ping handler
 func (s *Server) Status(context *gin.Context) {
 	context.String(200, "OK")
@@ -86,7 +81,11 @@ func (s *Server) Init() {
 	})
 
 	s.engine.GET("/manage/user/:username/access/list", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
-		s.endpointAdminUserRolesPerGroup(c)
+		s.endpointAdminListUserRoles(c)
+	})
+
+	s.engine.PUT("/manage/user/:username/access/edit", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
+		s.endpointAdminEditUserRoles(c)
 	})
 }
 

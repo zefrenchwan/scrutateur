@@ -34,15 +34,27 @@ func main() {
 		panic(err)
 	} else {
 		fmt.Println("Changed password twice (took ", time.Since(connectionStart), ")")
+		fmt.Println()
 	}
 
 	connectionStart = time.Now()
+	access := map[string][]string{"self": {"reader", "editor", "admin", "root"}}
 	var username = "other"
 	if err := session.AddUser(username, "secret"); err != nil {
 		panic(err)
-	} else if err := session.DeleteUser(username); err != nil {
+	} else if err := session.SetUserRolesForGroups(username, access); err != nil {
+		panic(err)
+	} else if values, err := session.GetUserRoles(username); err != nil {
+		panic(err)
+	} else if len(values) == 0 {
+		panic(fmt.Errorf("impossible to load access for %s", username))
+	} else {
+		fmt.Println("current access for ", username, ":", values)
+	}
+
+	if err := session.DeleteUser(username); err != nil {
 		panic(err)
 	} else {
-		fmt.Println("Created and deleted new user (took ", time.Since(connectionStart), ")")
+		fmt.Println("Created and deleted new user with basic access (took ", time.Since(connectionStart), ")")
 	}
 }

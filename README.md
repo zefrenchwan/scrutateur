@@ -52,17 +52,17 @@ Any failure in that part means a feature at least is not available.
 #### Admin operations on users
 
 * **/admin/user/create** creates an user (with no role)
-* **/admin/user/roles/{username}** displays groups and matching roles for a given user
+* **/admin/user/{username}/access/list** displays groups and matching roles for a given user
 
 #### Root operations on users
 
-* **/root/user/delete/{username}** deletes an user by name (no matter user's roles). Current user cannot delete current user
+* **/manage/user/{username}/delete** deletes an user by name (no matter user's roles). Current user cannot delete current user
 
 ### Security
 
 This project is not intented to run on production as is. 
-Code deals with basic security (roles, input validation, jwt) but was not audited or approved by a security expert.  
-Weak points are secrets protection (no salt) and default user mechanism (root configuration by default). 
+Code deals with basic security (roles, input validation, jwt) but was neither audited or approved by a security expert.  
+Known weak points are secrets protection (no salt) and default user mechanism (root configuration by default). 
 **Adapt my code for your context, contact your administrator or security expert before pushing any of this code to production**
 
 
