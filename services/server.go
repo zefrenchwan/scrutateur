@@ -66,26 +66,26 @@ func (s *Server) Init() {
 	//////////////////////////////////////////////////////////////////////////////
 	// GROUP SELF: USERS GET THEIR OWN INFORMATION OR CHANGE THEIR OWN PASSWORD //
 	//////////////////////////////////////////////////////////////////////////////
-	s.engine.GET("/user/whoami", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
+	s.engine.GET("/self/user/whoami", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
 		s.endpointUserInformation(c)
 	})
 
-	s.engine.POST("/user/password", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
+	s.engine.POST("/self/user/password", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
 		s.endpointChangePassword(c)
 	})
 
 	/////////////////////////////////////////////
 	// GROUP MANAGEMENT: DEAL WITH USER ACCESS //
 	/////////////////////////////////////////////
-	s.engine.POST("/admin/user/create", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
+	s.engine.POST("/manage/user/create", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
 		s.endpointAdminCreateUser(c)
 	})
 
-	s.engine.DELETE("/root/user/delete/:username", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
+	s.engine.DELETE("/manage/user/delete/:username", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
 		s.endpointRootDeleteUser(c)
 	})
 
-	s.engine.GET("/admin/user/roles/:username", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
+	s.engine.GET("/manage/user/roles/:username", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
 		s.endpointAdminUserRolesPerGroup(c)
 	})
 }

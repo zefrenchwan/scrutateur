@@ -67,12 +67,12 @@ func (c *ClientSession) callEndpoint(method, url string, body string) (string, e
 
 // GetUsername access server at that endpoint and returns this content
 func (c *ClientSession) GetUsername() (string, error) {
-	return c.callEndpoint("GET", CONNECTION_BASE+"user/whoami", "")
+	return c.callEndpoint("GET", CONNECTION_BASE+"self/user/whoami", "")
 }
 
 // SetUserPassword changes user password
 func (c *ClientSession) SetUserPassword(password string) error {
-	_, err := c.callEndpoint("POST", CONNECTION_BASE+"user/password", password)
+	_, err := c.callEndpoint("POST", CONNECTION_BASE+"self/user/password", password)
 	return err
 }
 
@@ -82,7 +82,7 @@ func (c *ClientSession) AddUser(username, password string) error {
 	payload := map[string]string{"name": username, "password": password}
 	if body, err := json.Marshal(payload); err != nil {
 		return err
-	} else if _, err := c.callEndpoint("POST", CONNECTION_BASE+"admin/user/create", string(body)); err != nil {
+	} else if _, err := c.callEndpoint("POST", CONNECTION_BASE+"manage/user/create", string(body)); err != nil {
 		return err
 	}
 
@@ -91,7 +91,7 @@ func (c *ClientSession) AddUser(username, password string) error {
 
 // DeleteUser deletes user by login
 func (c *ClientSession) DeleteUser(username string) error {
-	_, err := c.callEndpoint("DELETE", CONNECTION_BASE+"root/user/delete/"+username, "")
+	_, err := c.callEndpoint("DELETE", CONNECTION_BASE+"manage/user/delete/"+username, "")
 	return err
 }
 
@@ -99,7 +99,7 @@ func (c *ClientSession) DeleteUser(username string) error {
 func (c *ClientSession) GetUserRoles(username string) (map[string][]string, error) {
 	result := make(map[string][]string)
 	var loaded map[string]any
-	if payload, err := c.callEndpoint("GET", CONNECTION_BASE+"admin/user/roles/"+username, ""); err != nil {
+	if payload, err := c.callEndpoint("GET", CONNECTION_BASE+"manage/user/roles/"+username, ""); err != nil {
 		return nil, err
 	} else if err := json.Unmarshal([]byte(payload), &loaded); err != nil {
 		return nil, err
