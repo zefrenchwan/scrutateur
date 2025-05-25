@@ -72,7 +72,7 @@ Available operations so far:
 * set password
 * display current user name
 * add user (needs admin role) and delete user (root only)
-* display roles for user (admin)
+* display roles for user (admin) and change roles on groups (admin for admin, editor or reader, root for all roles)
 
 ## Architecture
 
@@ -95,8 +95,8 @@ To create go.mod, actions were:
 Users have a login and a password to prove their identity. 
 Roles define what an user may do: grant or not, read or write. 
 Hence, roles are: 
-1. root: admin with ability to grant roles
-2. admin: can perform admin functions such as creating users, changing roles, etc
+1. root: admin with ability to grant critical roles and perform any operations (including critical ones) that makes sense
+2. admin: can perform basic admin functions such as creating users, changing some roles, etc
 3. editor: can see and edit non critical content 
 4. reader: can see non critical content
 
@@ -117,8 +117,17 @@ Users have roles too, on a group of resources.
 * Role based model
 * input validators to prevent sql injection 
 
-### I want to create a page, what are the main steps ?
+### I cloned your code for my project. I want to create a page, what are the main steps ?
 
 1. Add your endpoint in `services` and link it to the `Init` function in services
 2. Manage access into `03_content.sql` (the TODO part)
 3. Add clients code in `clients/clients.go`
+
+### Do you use generative AI to help you coding ? 
+
+Nope, I am a dinosaur: I use only my brain, books, good ideas I read on the internet. 
+
+### I have an idea for a feature, will you implement it ? 
+
+Nope, I write open source code for that reason, with one of the most permissive licenses.
+Feel free to clone the project and add your features. 

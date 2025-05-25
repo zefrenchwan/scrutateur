@@ -38,7 +38,10 @@ func main() {
 	}
 
 	connectionStart = time.Now()
-	access := map[string][]string{"self": {"reader", "editor", "admin", "root"}}
+	access := map[string][]string{
+		"self":       {"reader", "editor", "admin", "root"},
+		"management": {},
+	}
 	var username = "other"
 	if err := session.AddUser(username, "secret"); err != nil {
 		panic(err)
