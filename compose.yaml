@@ -8,11 +8,8 @@ services:
       - ./logs/:/app/logs/
     environment:
       - POSTGRESQL_URL=postgres://postgres:popo@postgres:5432/capi
-      # UNCOMMENT NEXT LINE TO ACTIVATE REDIS CACHE
-      #- REDIS_URL=redis://redis:6379/0
     depends_on:
       - postgres
-      - redis
   postgres:
     image: postgres:17-bookworm
     ports:
@@ -23,13 +20,4 @@ services:
       - POSTGRES_PASSWORD=popo
       - POSTGRES_USER=postgres
       - POSTGRES_DB=capi
-  redis:
-    image: redis
-    restart: always
-    ports:
-      - '6379:6379'
-    command: redis-server
-    environment:
-      - REDIS_PORT=6379
-      - REDIS_DATABASES=1
  
