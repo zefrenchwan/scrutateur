@@ -43,7 +43,7 @@ Any failure in that part means a feature at least is not available.
 * **/status** just a string if up
 
 #### Unprotected operations 
-* **/login** expects a form with login and password, validates auth and returns the authorization set with the correct bearer. Example is `curl -i -X POST -H 'Content-Type: application/json' -d '{"login":"root","password":"secret"}' localhost:3000/login`
+* **/login** expects a form with login and password, validates auth and returns the authorization set with the correct bearer. Example is `curl -i -X POST -H 'Content-Type: application/json' -d '{"name":"root","password":"secret"}' localhost:3000/login`
 
 #### Self group: actions from current user to current user 
 * **/self/user/whoami/** displays user name if auth is valid and role allows it
