@@ -11,15 +11,15 @@ import (
 
 const CONNECTION_BASE = "http://localhost:3000/"
 
-// ClientSession has the main info to use the application: session id and authentication token
+// ClientSession has the main info to use the application
 type ClientSession struct {
-	authentication string
+	authorization string
 }
 
 // Connect validates user auth info and sets the context (auth info) for the rest of the calls
 func Connect(login, password string) (ClientSession, error) {
 	var result ClientSession
-	payload, errMarshal := json.Marshal(map[string]string{"login": login, "password": password})
+	payload, errMarshal := json.Marshal(map[string]string{"name": login, "password": password})
 	if errMarshal != nil {
 		panic(errMarshal)
 	}
@@ -27,7 +27,7 @@ func Connect(login, password string) (ClientSession, error) {
 	if resp, err := http.Post(CONNECTION_BASE+"login", "application/json", bytes.NewReader(payload)); err != nil {
 		return result, err
 	} else {
-		result.authentication = resp.Header.Get("Authorization")
+		result.authorization = resp.Header.Get("Authorization")
 		return result, nil
 	}
 }
@@ -49,20 +49,37 @@ func (c *ClientSession) callEndpoint(method, url string, body string) (string, e
 
 	request.Header = http.Header{
 		"Content-Type":  {"application/json"},
-		"Authorization": {c.authentication},
+		"Authorization": {c.authorization},
 	}
 
 	if resp, err := client.Do(request); err != nil {
-		return "", err
-	} else {
+		// try and see what happened
 		defer resp.Body.Close()
-		if resp.StatusCode >= 300 {
-			fmt.Println(resp)
-			return "", fmt.Errorf("invalid call: %s", resp.Status)
-		} else if body, err := io.ReadAll(resp.Body); err != nil {
+		if v, err := io.ReadAll(resp.Body); err != nil {
+			panic(err)
+		} else {
+			return string(v), err
+		}
+	} else {
+		// Get new token (extended time)
+		newAuth := resp.Header.Get("Authorization")
+		if len(newAuth) > 0 {
+			c.authorization = newAuth
+		}
+
+		// read content
+		defer resp.Body.Close()
+		var payload string
+		if body, err := io.ReadAll(resp.Body); err != nil {
 			return "", err
 		} else {
-			return string(body), err
+			payload = string(body)
+		}
+
+		if resp.StatusCode >= 300 {
+			return payload, fmt.Errorf("invalid call: %s", resp.Status)
+		} else {
+			return payload, nil
 		}
 	}
 }
@@ -97,7 +114,7 @@ func (c *ClientSession) DeleteUser(username string) error {
 		return errors.New("cannot create user with empty username")
 	}
 
-	path := fmt.Sprintf(CONNECTION_BASE+"manage/user/%s/delete/", username)
+	path := fmt.Sprintf(CONNECTION_BASE+"manage/user/%s/delete", username)
 	_, err := c.callEndpoint("DELETE", path, "")
 	return err
 }

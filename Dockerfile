@@ -1,4 +1,4 @@
-FROM golang:1.24.3-bookworm
+FROM golang:1.24
 
 EXPOSE 3000
 
@@ -8,6 +8,7 @@ RUN go mod download
 
 COPY *.go ./
 COPY services/ ./services/
+COPY engines/ ./engines/
 COPY storage/ ./storage/
 COPY dto/ ./dto/
 

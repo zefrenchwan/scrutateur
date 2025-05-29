@@ -85,10 +85,9 @@ Available operations so far:
 To create go.mod, actions were: 
 1. go get github.com/jackc/pgx/v5
 2. go get github.com/jackc/pgx/v5/pgxpool
-3. go get -u github.com/gin-gonic/gin
-4. go get -u github.com/golang-jwt/jwt/v5
-5. go get github.com/google/uuid
-6. go get github.com/redis/go-redis/v9   
+3. go get -u github.com/golang-jwt/jwt/v5
+4. go get github.com/google/uuid
+5. go get github.com/redis/go-redis/v9   
 
 ### The roles model 
 
@@ -111,6 +110,14 @@ Users have roles too, on a group of resources.
 
 
 ## FAQ 
+
+### Wait, your `engines/` module looks a lot like gin gonic...
+
+It does. 
+I first wrote the code using Gin Gonic. 
+And... 
+I faced a bug / unexplained behavior: setting header in a non-final middleware did not work, header was just not set in the response.
+So, I wrote a basic engine of my own. 
 
 ### What did you do to deal with security ? 
 

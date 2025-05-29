@@ -4,8 +4,9 @@ import (
 	"io"
 	"log"
 	"os"
+	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/zefrenchwan/scrutateur.git/engines"
 	"github.com/zefrenchwan/scrutateur.git/services"
 	"github.com/zefrenchwan/scrutateur.git/storage"
 )
@@ -14,8 +15,6 @@ func main() {
 	logPath := "logs/server.log"
 
 	// Init log system
-	gin.SetMode(gin.ReleaseMode)
-	gin.DisableConsoleColor()
 	var logFile io.Writer
 	os.Remove(logPath)
 	if file, err := os.Create(logPath); err != nil {
@@ -24,7 +23,6 @@ func main() {
 		logFile = io.MultiWriter(file)
 	}
 
-	gin.DefaultWriter = logFile
 	logger := log.New(logFile, "", log.Ldate|log.Ltime|log.Llongfile)
 
 	options := storage.DaoOptions{PostgresqlURL: os.Getenv("POSTGRESQL_URL"), RedisURL: os.Getenv("REDIS_URL")}
@@ -39,9 +37,8 @@ func main() {
 	defer dao.Close()
 
 	// define web serving and links
-	engine := services.NewServer(dao, logger)
-	engine.Init()
+	engine := services.Init(dao, engines.NewLongSecret(), 24*time.Hour)
 	logger.Println("Starting engine")
 	// start engine
-	engine.Run(3000)
+	engine.Launch(":3000")
 }

@@ -2,113 +2,115 @@ package services
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/zefrenchwan/scrutateur.git/dto"
+	"github.com/zefrenchwan/scrutateur.git/engines"
 )
 
-// UserCreationContent is the json data definition to create an user
-type UserCreationContent struct {
-	Username string `json:"name"`
-	Password string `json:"password"`
-}
-
 // endpointAdminCreateUser creates an user with no role
-func (s *Server) endpointAdminCreateUser(c *gin.Context) {
-	defer c.Request.Body.Close()
-	var content UserCreationContent
-	if err := c.ShouldBindBodyWithJSON(&content); err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
+func endpointAdminCreateUser(c *engines.HandlerContext) error {
+	var headers http.Header
+	var content UserInformation
+	if err := c.BindJsonBody(&content); err != nil {
+		c.BuildError(http.StatusBadRequest, err, headers)
 	} else if !ValidateUsernameFormat(content.Username) {
-		c.AbortWithError(http.StatusForbidden, errors.New("invalid username format"))
+		c.Build(http.StatusForbidden, "invalid username format", headers)
 	} else if !ValidateUserpasswordFormat(content.Password) {
-		c.AbortWithError(http.StatusForbidden, errors.New("invalid password format"))
-	} else if err := s.dao.UpsertUser(context.Background(), content.Username, content.Password); err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.Build(http.StatusForbidden, "invalid password format", headers)
+	} else if err := c.Dao.UpsertUser(context.Background(), content.Username, content.Password); err != nil {
+		c.BuildError(http.StatusInternalServerError, err, headers)
 	} else {
-		c.Status(http.StatusOK)
-		c.Next()
+		headers = c.RequestHeaderByNames("Authorization")
+		c.Build(http.StatusOK, "", headers)
 	}
+
+	// no error we could not manage
+	return nil
 }
 
 // endpointRootDeleteUser reads user's login parameter and delete that user (cannot be current user)
-func (s *Server) endpointRootDeleteUser(c *gin.Context) {
-	username := c.Param("username")
+func endpointRootDeleteUser(c *engines.HandlerContext) error {
+	username := c.GetQueryParameters()["username"]
+	var headers http.Header
 	if len(username) == 0 {
-		c.AbortWithError(http.StatusBadRequest, errors.New("missing username for user deletion"))
+		c.Build(http.StatusBadRequest, "missing username for user deletion", headers)
 	} else if !ValidateUsernameFormat(username) {
-		c.AbortWithError(http.StatusForbidden, errors.New("invalid username format"))
-	} else if currentUser, found := c.Get("login"); !found {
-		c.AbortWithError(http.StatusInternalServerError, errors.New("cannot find user"))
-	} else if currentUser.(string) == username {
-		c.AbortWithError(http.StatusBadRequest, errors.New("cannot delete your own account"))
-	} else if err := s.dao.DeleteUser(context.Background(), username); err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.Build(http.StatusForbidden, "invalid username format", nil)
+	} else if currentUser := c.GetContextValueAsString("login"); currentUser == "" {
+		c.Build(http.StatusInternalServerError, "cannot find user", nil)
+	} else if currentUser == username {
+		c.Build(http.StatusBadRequest, "cannot delete your own account", nil)
+	} else if err := c.Dao.DeleteUser(context.Background(), username); err != nil {
+		c.BuildError(http.StatusInternalServerError, err, nil)
 	} else {
-		c.Status(http.StatusOK)
-		c.Next()
+		c.Build(http.StatusOK, "", c.RequestHeaderByNames("Authorization"))
 	}
+
+	// dealt with internal errors already
+	return nil
 }
 
 // endpointAdminListUserRoles displays user information for allocated groups and matching roles
-func (s *Server) endpointAdminListUserRoles(c *gin.Context) {
-	username := c.Param("username")
+func endpointAdminListUserRoles(c *engines.HandlerContext) error {
+	username := c.GetQueryParameters()["username"]
 	if len(username) == 0 {
-		c.AbortWithError(http.StatusBadRequest, errors.New("missing username for user roles information"))
+		c.Build(http.StatusBadRequest, "missing username for user roles information", nil)
 	} else if !ValidateUsernameFormat(username) {
-		c.AbortWithError(http.StatusForbidden, errors.New("invalid username format"))
-	} else if values, err := s.dao.GetUserGrantAccessPerGroup(context.Background(), username); err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.Build(http.StatusForbidden, "invalid username format", nil)
+	} else if values, err := c.Dao.GetUserGrantAccessPerGroup(context.Background(), username); err != nil {
+		c.BuildError(http.StatusInternalServerError, err, nil)
 	} else if len(values) == 0 {
-		c.AbortWithError(http.StatusNotFound, fmt.Errorf("no matching user for %s", username))
-	} else {
-		c.JSON(http.StatusOK, values)
-		c.Next()
+		c.Build(http.StatusNotFound, fmt.Sprintf("no matching user for %s", username), nil)
+	} else if err := c.BuildJson(http.StatusOK, values, c.RequestHeaderByNames("Authorization")); err != nil {
+		c.ClearResponse()
+		c.BuildError(http.StatusInternalServerError, err, nil)
 	}
+
+	// no unmanageable error
+	return nil
 }
 
 // endpointAdminEditUserRoles changes roles of a given user for a given group
-func (s *Server) endpointAdminEditUserRoles(c *gin.Context) {
-	defer c.Request.Body.Close()
-	username := c.Param("username")
+func endpointAdminEditUserRoles(c *engines.HandlerContext) error {
+	username := c.GetQueryParameters()["username"]
 	var values map[string][]string
 	if len(username) == 0 {
-		c.AbortWithError(http.StatusBadRequest, errors.New("missing username for user roles information"))
+		c.Build(http.StatusBadRequest, "missing username for user roles information", nil)
 	} else if !ValidateUsernameFormat(username) {
-		c.AbortWithError(http.StatusForbidden, errors.New("invalid username format"))
-	} else if actor, found := c.Get("login"); !found {
-		c.AbortWithError(http.StatusInternalServerError, errors.New("cannot access login from current content"))
-	} else if actorAccess, err := s.dao.GetUserGrantAccessPerGroup(context.Background(), actor.(string)); err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-	} else if err := c.ShouldBindJSON(&values); err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
+		c.Build(http.StatusForbidden, "invalid username format", nil)
+	} else if actor := c.GetContextValueAsString("login"); actor == "" {
+		c.Build(http.StatusInternalServerError, "cannot access login from current content", nil)
+	} else if actorAccess, err := c.Dao.GetUserGrantAccessPerGroup(context.Background(), actor); err != nil {
+		c.BuildError(http.StatusInternalServerError, err, nil)
+	} else if err := c.BindJsonBody(&values); err != nil {
+		c.BuildError(http.StatusBadRequest, err, nil)
 	} else if len(values) == 0 {
-		c.AbortWithError(http.StatusBadRequest, errors.New("empty request"))
+		c.Build(http.StatusBadRequest, "empty request", nil)
 	} else {
 		parsedRequest := make(map[string][]dto.GrantRole)
 		// request may be parsed
 		for group, rawRoles := range values {
 			if len(group) == 0 {
-				c.AbortWithError(http.StatusBadRequest, errors.New("empty value"))
-				return
+				c.Build(http.StatusBadRequest, "empty value", nil)
+				return nil
 			} else if roles, err := dto.ParseGrantRoles(rawRoles); err != nil {
-				c.AbortWithError(http.StatusBadRequest, errors.New("invalid roles"))
-				return
+				c.Build(http.StatusBadRequest, "invalid roles", nil)
+				return nil
 			} else {
 				parsedRequest[group] = roles
 			}
 		}
 
 		if err := MayGrant(actorAccess, parsedRequest); err != nil {
-			c.AbortWithError(http.StatusUnauthorized, err)
-		} else if err := s.dao.GrantAccess(context.Background(), username, parsedRequest); err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
+			c.BuildError(http.StatusUnauthorized, err, nil)
+		} else if err := c.Dao.GrantAccess(context.Background(), username, parsedRequest); err != nil {
+			c.BuildError(http.StatusInternalServerError, err, nil)
 		} else {
-			c.Status(http.StatusOK)
-			c.Next()
+			c.Build(http.StatusOK, "", c.RequestHeaderByNames("Authorization"))
 		}
 	}
+
+	return nil
 }

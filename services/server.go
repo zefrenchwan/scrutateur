@@ -1,95 +1,46 @@
 package services
 
 import (
-	"log"
-	"strconv"
+	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/zefrenchwan/scrutateur.git/engines"
 	"github.com/zefrenchwan/scrutateur.git/storage"
 )
 
-// Server encapsulates app server toolbox (dao) and decorates a gin server
-type Server struct {
-	// secret to deal with auth
-	secret string
-	// tokenDuration is defaulted to 24h
-	tokenDuration time.Duration
-	// dao allows any database operation
-	dao storage.Dao
-	// engine is the technical solution to implement server logic (gin in this case)
-	engine *gin.Engine
-	// logger displays logs into log output
-	logger *log.Logger
-}
-
-// NewServer makes a new app server with a given dao
-func NewServer(dao storage.Dao, logger *log.Logger) Server {
-	return Server{
-		dao:           dao,
-		engine:        gin.New(),
-		secret:        NewSecret(),
-		tokenDuration: time.Hour * 24,
-		logger:        logger,
-	}
-}
-
-// Status is a ping handler
-func (s *Server) Status(context *gin.Context) {
-	context.String(200, "OK")
-}
-
 // Init is the place to add all links endpoint -> handlers
-func (s *Server) Init() {
-	// define useful unprotected functions here
-	// status is a ping method
-	s.engine.GET("/status", func(c *gin.Context) {
-		s.Status(c)
-	})
+func Init(dao storage.Dao, secret string, tokenDuration time.Duration) engines.ProcessingEngine {
+	server := engines.NewProcessingEngine(dao)
+
+	// technical endpoint to prove app is up
+	server.AddProcessors("GET", "/status", func(context *engines.HandlerContext) error { context.Build(http.StatusOK, "", nil); return nil })
 
 	// login is the connection handler
-	s.engine.POST("/login", func(c *gin.Context) {
-		s.Login(c)
-	})
+	loginHandler := BuildLoginHandler(secret, tokenDuration)
+	server.AddProcessors("POST", "/login", loginHandler)
 
 	// PROTECTED PAGES
-	middleware := s.AuthenticationMiddleware()
+	connectionMiddleware := AuthenticationMiddleware(secret, tokenDuration)
 
 	// PAGES FOR AT LEAST A ROLE
-	allAuthUsersMiddleware := s.RolesBasedMiddleware()
+	roleValidationMiddleware := RolesBasedMiddleware()
 
 	//////////////////////////////////////////////////////////////////////////////
 	// GROUP SELF: USERS GET THEIR OWN INFORMATION OR CHANGE THEIR OWN PASSWORD //
 	//////////////////////////////////////////////////////////////////////////////
-	s.engine.GET("/self/user/whoami", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
-		s.endpointUserInformation(c)
-	})
-
-	s.engine.POST("/self/user/password", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
-		s.endpointChangePassword(c)
-	})
+	server.AddProcessors("GET", "/self/user/whoami", connectionMiddleware, roleValidationMiddleware, endpointUserInformation)
+	server.AddProcessors("POST", "/self/user/password", connectionMiddleware, roleValidationMiddleware, endpointChangePassword)
 
 	/////////////////////////////////////////////
 	// GROUP MANAGEMENT: DEAL WITH USER ACCESS //
 	/////////////////////////////////////////////
-	s.engine.POST("/manage/user/create", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
-		s.endpointAdminCreateUser(c)
-	})
+	server.AddProcessors("POST", "/manage/user/create", connectionMiddleware, roleValidationMiddleware, endpointAdminCreateUser)
+	server.AddProcessors("DELETE", "/manage/user/{username}/delete", connectionMiddleware, roleValidationMiddleware, endpointRootDeleteUser)
+	server.AddProcessors("GET", "/manage/user/{username}/access/list", connectionMiddleware, roleValidationMiddleware, endpointAdminListUserRoles)
+	server.AddProcessors("PUT", "/manage/user/{username}/access/edit", connectionMiddleware, roleValidationMiddleware, endpointAdminEditUserRoles)
 
-	s.engine.DELETE("/manage/user/:username/delete", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
-		s.endpointRootDeleteUser(c)
-	})
-
-	s.engine.GET("/manage/user/:username/access/list", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
-		s.endpointAdminListUserRoles(c)
-	})
-
-	s.engine.PUT("/manage/user/:username/access/edit", middleware, allAuthUsersMiddleware, func(c *gin.Context) {
-		s.endpointAdminEditUserRoles(c)
-	})
-}
-
-// Run starts the server
-func (s *Server) Run(port int) {
-	s.engine.Run(":" + strconv.Itoa(port))
+	////////////////////////////////
+	// END OF HANDLER DEFINITIONS //
+	////////////////////////////////
+	return server
 }
