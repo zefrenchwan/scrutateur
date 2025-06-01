@@ -8,7 +8,7 @@ import (
 // ValidateQueryProcessor returns a processor that validates the query method type
 func ValidateQueryProcessor(requestMethod string) RequestProcessor {
 	return func(context *HandlerContext) error {
-		if strings.ToLower(requestMethod) != strings.ToLower(context.GetRequestMethod()) {
+		if !strings.EqualFold(requestMethod, context.GetRequestMethod()) {
 			context.Build(http.StatusMethodNotAllowed, "", nil)
 		}
 

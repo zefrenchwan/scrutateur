@@ -26,7 +26,7 @@ func NewCacheStorage(url string) (CacheStorage, error) {
 }
 
 // SetValue sets value in a cache
-func (c *CacheStorage) SetValue(context context.Context, key, value string) error {
+func (c *CacheStorage) SetValue(context context.Context, key string, value []byte) error {
 	if status := c.client.Set(context, key, value, c.ttl); status.Err() != nil {
 		return status.Err()
 	}
@@ -34,12 +34,18 @@ func (c *CacheStorage) SetValue(context context.Context, key, value string) erro
 	return nil
 }
 
+// Has returns true if the key is stored in the cache
+func (c *CacheStorage) Has(ctx context.Context, key string) bool {
+	cmd, err := c.client.Exists(ctx, key).Result()
+	return err != nil || cmd == 0
+}
+
 // GetValue gets value by key from a cache
-func (c *CacheStorage) GetValue(context context.Context, key string) (string, error) {
+func (c *CacheStorage) GetValue(context context.Context, key string) ([]byte, error) {
 	if result := c.client.Get(context, key); result.Err() != nil {
-		return "", result.Err()
+		return nil, result.Err()
 	} else {
-		return result.String(), nil
+		return result.Bytes()
 	}
 }
 

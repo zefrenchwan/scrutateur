@@ -19,7 +19,15 @@ func Init(dao storage.Dao, secret string, tokenDuration time.Duration) engines.P
 	loginHandler := BuildLoginHandler(secret, tokenDuration)
 	server.AddProcessors("POST", "/login", loginHandler)
 
-	// PROTECTED PAGES
+	//////////////////////////////////
+	// STATIC UNPROTECTED RESOURCES //
+	//////////////////////////////////
+	staticHandler := engines.BuildStaticHandler("/app/static/", "/app/static")
+	server.AddProcessors("GET", "/app/static/changelog.txt", staticHandler)
+
+	/////////////////////
+	// PROTECTED PAGES //
+	/////////////////////
 	connectionMiddleware := AuthenticationMiddleware(secret, tokenDuration)
 
 	// PAGES FOR AT LEAST A ROLE

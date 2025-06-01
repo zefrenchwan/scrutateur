@@ -57,12 +57,16 @@ func (d *Dao) ValidateUser(ctx context.Context, login string, password string) (
 
 // SetValue sets value in a cache
 func (d *Dao) SetValue(context context.Context, key, value string) error {
-	return d.cache.SetValue(context, key, value)
+	return d.cache.SetValue(context, key, []byte(value))
 }
 
 // GetValue gets value by key in a cache
 func (d *Dao) GetValue(context context.Context, key string) (string, error) {
-	return d.cache.GetValue(context, key)
+	if rawContent, err := d.cache.GetValue(context, key); err != nil {
+		return "", err
+	} else {
+		return string(rawContent), nil
+	}
 }
 
 // GetGroups returns all the resources group names (ordered by name)

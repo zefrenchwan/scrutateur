@@ -7,11 +7,19 @@ import (
 	"github.com/zefrenchwan/scrutateur.git/storage"
 )
 
+// HandlerContextKey is necessary as a key type for context handling
+type HandlerContextKey string
+
+// HandlerContext is the context to pass on each request, for the processor to get everything
 type HandlerContext struct {
-	context  context.Context
-	request  RequestDecorator
+	// go context, a map[string]any was not enough due to dao
+	context context.Context
+	// decorated request (to ease request use)
+	request RequestDecorator
+	// response to send, will do as the last step
 	response AbstractResponse
-	Dao      storage.Dao
+	// design choice: include dao in here, we don't build a general engine, we want custom use
+	Dao storage.Dao
 }
 
 // GetCurrentContext returns the current context
@@ -50,7 +58,7 @@ func (c *HandlerContext) RequestBodyAsString() (string, error) {
 }
 
 // SetContextValue sets value within inner context
-func (c *HandlerContext) SetContextValue(key string, value any) {
+func (c *HandlerContext) SetContextValue(key HandlerContextKey, value any) {
 	if c.context == nil {
 		c.context = context.Background()
 	}
@@ -64,7 +72,7 @@ func (c *HandlerContext) GetContextValue(key string) any {
 }
 
 // GetContextValueAsString gets value or empty for no value or no match
-func (c *HandlerContext) GetContextValueAsString(key string) string {
+func (c *HandlerContext) GetContextValueAsString(key HandlerContextKey) string {
 	value := c.context.Value(key)
 	if result, ok := value.(string); ok {
 		return result
@@ -123,6 +131,11 @@ func (c *HandlerContext) BuildJson(code int, body any, headers http.Header) erro
 // BuildError sets all values in parameters and flags the response to be ready
 func (c *HandlerContext) BuildError(code int, failure error, headers http.Header) {
 	c.response.BuildError(code, failure, headers)
+}
+
+// BuildRaw sets values (body as is) and mark the response as ready
+func (c *HandlerContext) BuildRaw(code int, body []byte, header http.Header) {
+	c.response.buildResponse(code, body, header)
 }
 
 // Done flags the response as ready

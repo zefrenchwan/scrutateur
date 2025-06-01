@@ -39,7 +39,11 @@ Any failure in that part means a feature at least is not available.
 
 ### Endpoints
 
-#### Infrastructure 
+#### About (need no auth)
+
+* **/app/static/changelog.txt** versions and news
+
+#### Infrastructure (need no auth) 
 * **/status** just a string if up
 
 #### Unprotected operations 

@@ -6,11 +6,14 @@ import (
 	"github.com/zefrenchwan/scrutateur.git/storage"
 )
 
+// ProcessingEngine links url patterns to processors
 type ProcessingEngine struct {
 	dao storage.Dao
 	mux *http.ServeMux
 }
 
+// NewProcessingEngine builds a new engine.
+// Dao parameter is necessary to put it on each context
 func NewProcessingEngine(dao storage.Dao) ProcessingEngine {
 	return ProcessingEngine{
 		dao: dao,
@@ -18,6 +21,7 @@ func NewProcessingEngine(dao storage.Dao) ProcessingEngine {
 	}
 }
 
+// AddProcessors links a (method + urlpattern) to a set of processors
 func (e *ProcessingEngine) AddProcessors(method string, urlPattern string, processors ...RequestProcessor) {
 	var allProcessors []RequestProcessor
 	allProcessors = append(allProcessors, ValidateQueryProcessor(method))
@@ -25,6 +29,7 @@ func (e *ProcessingEngine) AddProcessors(method string, urlPattern string, proce
 	e.mux.HandleFunc(urlPattern, BuildHandlerFunc(e.dao, allProcessors...))
 }
 
+// Launch starts the engine
 func (e *ProcessingEngine) Launch(address string) {
 	http.ListenAndServe(address, e.mux)
 }
