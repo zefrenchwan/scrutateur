@@ -1,4 +1,4 @@
-package services
+package engines
 
 // UserInformation is the json data definition to define an user
 type UserInformation struct {

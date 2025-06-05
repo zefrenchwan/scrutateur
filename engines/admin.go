@@ -1,4 +1,4 @@
-package services
+package engines
 
 import (
 	"context"
@@ -6,11 +6,10 @@ import (
 	"net/http"
 
 	"github.com/zefrenchwan/scrutateur.git/dto"
-	"github.com/zefrenchwan/scrutateur.git/engines"
 )
 
-// endpointAdminCreateUser creates an user with no role
-func endpointAdminCreateUser(c *engines.HandlerContext) error {
+// EndpointAdminCreateUser creates an user with no role
+func EndpointAdminCreateUser(c *HandlerContext) error {
 	var headers http.Header
 	var content UserInformation
 	if err := c.BindJsonBody(&content); err != nil {
@@ -30,8 +29,8 @@ func endpointAdminCreateUser(c *engines.HandlerContext) error {
 	return nil
 }
 
-// endpointRootDeleteUser reads user's login parameter and delete that user (cannot be current user)
-func endpointRootDeleteUser(c *engines.HandlerContext) error {
+// EndpointRootDeleteUser reads user's login parameter and delete that user (cannot be current user)
+func EndpointRootDeleteUser(c *HandlerContext) error {
 	username := c.GetQueryParameters()["username"]
 	var headers http.Header
 	if len(username) == 0 {
@@ -52,8 +51,8 @@ func endpointRootDeleteUser(c *engines.HandlerContext) error {
 	return nil
 }
 
-// endpointAdminListUserRoles displays user information for allocated groups and matching roles
-func endpointAdminListUserRoles(c *engines.HandlerContext) error {
+// EndpointAdminListUserRoles displays user information for allocated groups and matching roles
+func EndpointAdminListUserRoles(c *HandlerContext) error {
 	username := c.GetQueryParameters()["username"]
 	if len(username) == 0 {
 		c.Build(http.StatusBadRequest, "missing username for user roles information", nil)
@@ -72,8 +71,8 @@ func endpointAdminListUserRoles(c *engines.HandlerContext) error {
 	return nil
 }
 
-// endpointAdminEditUserRoles changes roles of a given user for a given group
-func endpointAdminEditUserRoles(c *engines.HandlerContext) error {
+// EndpointAdminEditUserRoles changes roles of a given user for a given group
+func EndpointAdminEditUserRoles(c *HandlerContext) error {
 	username := c.GetQueryParameters()["username"]
 	var values map[string][]string
 	if len(username) == 0 {

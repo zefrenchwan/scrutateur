@@ -4,12 +4,12 @@ import (
 	"testing"
 
 	"github.com/zefrenchwan/scrutateur.git/dto"
-	"github.com/zefrenchwan/scrutateur.git/services"
+	"github.com/zefrenchwan/scrutateur.git/engines"
 )
 
 func TestMatchesAccept(t *testing.T) {
 	rule := dto.GrantAccessForResource{Operator: dto.OperatorMatches, Template: "/root/admin/*", UserRoles: []dto.GrantRole{dto.RoleRoot}}
-	engine := services.AuthRulesEngine{Conditions: []dto.GrantAccessForResource{rule}}
+	engine := engines.AuthRulesEngine{Conditions: []dto.GrantAccessForResource{rule}}
 	if access, roles, err := engine.CanAccessResource("/root/admin/popo"); err != nil {
 		t.Fatal(err)
 	} else if !access {
@@ -23,7 +23,7 @@ func TestMatchesAccept(t *testing.T) {
 
 func TestMatchesRefuse(t *testing.T) {
 	rule := dto.GrantAccessForResource{Operator: dto.OperatorMatches, Template: "/root/admin/*", UserRoles: []dto.GrantRole{dto.RoleRoot}}
-	engine := services.AuthRulesEngine{Conditions: []dto.GrantAccessForResource{rule}}
+	engine := engines.AuthRulesEngine{Conditions: []dto.GrantAccessForResource{rule}}
 	if access, roles, err := engine.CanAccessResource("/root/admin/popo/"); err != nil {
 		t.Fatal(err)
 	} else if access {
@@ -57,7 +57,7 @@ func TestGrantInsufficientRole(t *testing.T) {
 	// can't grant remote group
 	accessRoles := map[string][]dto.GrantRole{"group": adminRoles}
 	requestRoles := map[string][]dto.GrantRole{"other": adminRoles}
-	if err := services.MayGrant(accessRoles, requestRoles); err == nil {
+	if err := engines.MayGrant(accessRoles, requestRoles); err == nil {
 		t.Log("cannot grant to group we are not in")
 		t.Fail()
 	}
@@ -69,7 +69,7 @@ func TestGrantInsufficientRole(t *testing.T) {
 
 	requestRoles = map[string][]dto.GrantRole{"group": rootRoles}
 
-	if err := services.MayGrant(accessRoles, requestRoles); err == nil {
+	if err := engines.MayGrant(accessRoles, requestRoles); err == nil {
 		t.Log("admin cannot grant root")
 		t.Fail()
 	}
@@ -78,7 +78,7 @@ func TestGrantInsufficientRole(t *testing.T) {
 	accessRoles = make(map[string][]dto.GrantRole)
 	requestRoles = map[string][]dto.GrantRole{"group": rootRoles}
 
-	if err := services.MayGrant(accessRoles, requestRoles); err == nil {
+	if err := engines.MayGrant(accessRoles, requestRoles); err == nil {
 		t.Log("no admin role")
 		t.Fail()
 	}
@@ -86,7 +86,7 @@ func TestGrantInsufficientRole(t *testing.T) {
 	// need admin access
 	accessRoles = map[string][]dto.GrantRole{"group": noAdmin}
 	requestRoles = map[string][]dto.GrantRole{"group": noAdmin}
-	if err := services.MayGrant(accessRoles, requestRoles); err == nil {
+	if err := engines.MayGrant(accessRoles, requestRoles); err == nil {
 		t.Log("cannot grant to admin if not admin")
 		t.Fail()
 	}
@@ -101,7 +101,7 @@ func TestGrant(t *testing.T) {
 	accessRoles := map[string][]dto.GrantRole{"group": adminRoles}
 	requestRoles := map[string][]dto.GrantRole{"group": noAdmin}
 
-	if err := services.MayGrant(accessRoles, requestRoles); err != nil {
+	if err := engines.MayGrant(accessRoles, requestRoles); err != nil {
 		t.Log("admin should grant reader and editor", err)
 		t.Fail()
 	}
@@ -110,7 +110,7 @@ func TestGrant(t *testing.T) {
 	accessRoles = map[string][]dto.GrantRole{"group": rootRoles}
 	requestRoles = map[string][]dto.GrantRole{"group": noAdmin}
 
-	if err := services.MayGrant(accessRoles, requestRoles); err != nil {
+	if err := engines.MayGrant(accessRoles, requestRoles); err != nil {
 		t.Log("root should grant reader and editor", err)
 		t.Fail()
 	}
