@@ -1,8 +1,11 @@
 package engines
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
+	"path/filepath"
 )
 
 // BuildStaticHandler maps a url base to a local storage and gets content from it
@@ -20,4 +23,24 @@ func BuildStaticHandler(urlBase string, localBase string) RequestProcessor {
 
 		return nil
 	}
+}
+
+// LoadStaticResources gets all the resources within a dir and returns their absolute path
+func LoadStaticResources(basePath string) ([]string, error) {
+	// all paths
+	var content []string
+	// global error
+	var resultingError error
+	// Using WalkDir and collecting
+	filepath.WalkDir(basePath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			resultingError = errors.Join(resultingError, err)
+		} else if !d.IsDir() {
+			content = append(content, path)
+		}
+
+		return err
+	})
+
+	return content, resultingError
 }

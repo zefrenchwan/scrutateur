@@ -10,6 +10,14 @@ import (
 	"github.com/zefrenchwan/scrutateur.git/storage"
 )
 
+// MapUrlToPath transforms an url asking for resource to a local path.
+// PARAMETERS:
+// urlBase is the path base to delete from the url
+// localBase is the local path base to replace within the url
+// url is the resource asked by user
+// RESULT:
+// the local path of the resource if any
+// an error if said file does not exist, or if url is suspicious (like an attempt to go through the local FS)
 func MapUrlToPath(urlBase, localBase, url string) (string, error) {
 	if strings.Contains(url, "//") {
 		return "", errors.New("suspicious url")

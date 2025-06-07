@@ -8,6 +8,9 @@ import (
 	"github.com/zefrenchwan/scrutateur.git/storage"
 )
 
+// LOCAL_RESOURCES_PATH is the path of all resources to load
+const LOCAL_RESOURCES_PATH = "/app/static"
+
 // Init is the place to add all links endpoint -> handlers
 func Init(dao storage.Dao, secret string, tokenDuration time.Duration) engines.ProcessingEngine {
 	server := engines.NewProcessingEngine(dao)
@@ -22,8 +25,15 @@ func Init(dao storage.Dao, secret string, tokenDuration time.Duration) engines.P
 	//////////////////////////////////
 	// STATIC UNPROTECTED RESOURCES //
 	//////////////////////////////////
-	staticHandler := engines.BuildStaticHandler("/app/static/", "/app/static")
-	server.AddProcessors("GET", "/app/static/changelog.txt", staticHandler)
+	staticHandler := engines.BuildStaticHandler("/app/static/", LOCAL_RESOURCES_PATH)
+	paths, err := engines.LoadStaticResources(LOCAL_RESOURCES_PATH)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, path := range paths {
+		server.AddProcessors("GET", path, staticHandler)
+	}
 
 	/////////////////////
 	// PROTECTED PAGES //
