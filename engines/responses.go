@@ -79,8 +79,8 @@ func (ar *AbstractResponse) ClearHeaders() {
 	ar.Headers = make(http.Header)
 }
 
-// buildResponse constructs a full response ready to be sent
-func (ar *AbstractResponse) buildResponse(code int, content []byte, headers http.Header) {
+// setResponse creates a new response
+func (ar *AbstractResponse) setResponse(code int, content []byte, headers http.Header) {
 	ar.Code = code
 	if len(content) > 0 {
 		ar.Content = content
@@ -95,8 +95,35 @@ func (ar *AbstractResponse) buildResponse(code int, content []byte, headers http
 		ar.Headers = headers.Clone()
 	}
 
+	// flag it explicitely to build
+	ar.Ready = false
+}
+
+// buildResponse constructs a full response ready to be sent
+func (ar *AbstractResponse) buildResponse(code int, content []byte, headers http.Header) {
+	ar.setResponse(code, content, headers)
 	// and it is ready
 	ar.Ready = true
+}
+
+// SetResponseValues constructs a new response and flags it NOT to be ready
+func (ar *AbstractResponse) SetResponseValues(code int, body []byte, headers http.Header) {
+	ar.setResponse(code, body, headers)
+}
+
+// SetStringResponseValues constructs a new response with a string body, and flags it NOT to be ready
+func (ar *AbstractResponse) SetStringResponseValues(code int, body string, headers http.Header) {
+	ar.setResponse(code, []byte(body), headers)
+}
+
+// SetJSONResponseValues constructs a new response with a json serializable body, and flags it NOT to be ready
+func (ar *AbstractResponse) SetJSONResponseValues(code int, body any, headers http.Header) error {
+	if res, err := json.Marshal(body); err != nil {
+		return err
+	} else {
+		ar.setResponse(code, res, headers)
+		return nil
+	}
 }
 
 // Build sets all values in parameters and flags the response to be ready
@@ -106,10 +133,10 @@ func (ar *AbstractResponse) Build(code int, body string, headers http.Header) {
 
 // BuildJson builds a json as a body, or returns an error for serde issue
 func (ar *AbstractResponse) BuildJson(code int, body any, headers http.Header) error {
-	if res, err := json.Marshal(body); err != nil {
+	if err := ar.SetJSONResponseValues(code, body, headers); err != nil {
 		return err
 	} else {
-		ar.buildResponse(code, res, headers)
+		ar.Ready = true
 		return nil
 	}
 }

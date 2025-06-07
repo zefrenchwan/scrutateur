@@ -118,6 +118,21 @@ func (c *HandlerContext) ClearResponse() {
 	c.response.Code = 0
 }
 
+// SetRawResponseValues starts a new response with that values
+func (ar *HandlerContext) SetRawResponseValues(code int, body []byte, headers http.Header) {
+	ar.response.setResponse(code, body, headers)
+}
+
+// SetStringResponseValues constructs a new response with a string body, and flags it NOT to be ready
+func (ar *HandlerContext) SetStringResponseValues(code int, body string, headers http.Header) {
+	ar.response.SetStringResponseValues(code, body, headers)
+}
+
+// SetJSONResponseValues constructs a new response with a json serializable body, and flags it NOT to be ready
+func (ar *HandlerContext) SetJSONResponseValues(code int, body any, headers http.Header) error {
+	return ar.response.SetJSONResponseValues(code, body, headers)
+}
+
 // Build sets all values in parameters and flags the response to be ready
 func (c *HandlerContext) Build(code int, body string, headers http.Header) {
 	c.response.Build(code, body, headers)
