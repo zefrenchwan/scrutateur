@@ -1,3 +1,6 @@
+# Copyright zefrenchwan, 2025
+# MIT license 
+
 0.1.1 (current)
     static file management
 

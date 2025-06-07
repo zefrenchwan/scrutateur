@@ -15,7 +15,7 @@ func BuildHandlerFunc(dao storage.Dao, processors ...RequestProcessor) func(http
 	// no handler, default action
 	if len(processors) == 0 {
 		return func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK)
+			w.WriteHeader(http.StatusNoContent)
 		}
 	}
 
@@ -39,7 +39,7 @@ func BuildHandlerFunc(dao storage.Dao, processors ...RequestProcessor) func(http
 		// write answer anyway, but do not assume it is ready
 		if !sharedContext.response.ShouldSend() {
 			sharedContext.ClearResponse()
-			sharedContext.SetResponseStatus(http.StatusNoContent)
+			sharedContext.SetResponseStatus(http.StatusPartialContent)
 			sharedContext.response.Write(w)
 		}
 	}

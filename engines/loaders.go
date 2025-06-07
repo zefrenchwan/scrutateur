@@ -110,6 +110,7 @@ type LocalResourceLoader struct {
 	localBase string
 }
 
+// NewLocalResourceLoader loads content from local path
 func NewLocalResourceLoader(urlBase, localBase string) ResourceLoader {
 	return LocalResourceLoader{urlBase: urlBase, localBase: localBase}
 }

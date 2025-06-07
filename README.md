@@ -77,6 +77,7 @@ Available operations so far:
 * display current user name
 * add user (needs admin role) and delete user (root only)
 * display roles for user (admin) and change roles on groups (admin for admin, editor or reader, root for all roles)
+* load resources by name (needs no auth)
 
 ## Architecture
 
