@@ -60,4 +60,13 @@ func main() {
 	} else {
 		fmt.Println("Created and deleted new user with basic access (took ", time.Since(connectionStart), ")")
 	}
+
+	// to put as final content
+	fmt.Println()
+	fmt.Println("RELEASE NOTES")
+	if body, err := clients.LoadStaticContent("changelog.txt"); err != nil {
+		panic(err)
+	} else {
+		fmt.Println(string(body))
+	}
 }
