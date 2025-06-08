@@ -9,7 +9,10 @@ import (
 )
 
 // LOCAL_RESOURCES_PATH is the path of all resources to load
-const LOCAL_RESOURCES_PATH = "/app/static"
+const LOCAL_RESOURCES_PATH = "/app/static/"
+
+// EXTERNAL_API_PREFIX is the URL prefix to get a given resource
+const EXTERNAL_API_PREFIX = "/app/static"
 
 // Init is the place to add all links endpoint -> handlers
 func Init(dao storage.Dao, secret string, tokenDuration time.Duration) engines.ProcessingEngine {
@@ -25,14 +28,13 @@ func Init(dao storage.Dao, secret string, tokenDuration time.Duration) engines.P
 	//////////////////////////////////
 	// STATIC UNPROTECTED RESOURCES //
 	//////////////////////////////////
-	staticHandler := engines.BuildStaticHandler("/app/static/", LOCAL_RESOURCES_PATH)
-	paths, err := engines.LoadStaticResources(LOCAL_RESOURCES_PATH)
-	if err != nil {
-		panic(err)
+	mapping, errLoad := engines.ListStaticResources(EXTERNAL_API_PREFIX, LOCAL_RESOURCES_PATH)
+	if errLoad != nil {
+		panic(errLoad)
 	}
 
-	for _, path := range paths {
-		server.AddProcessors("GET", path, staticHandler)
+	for url, path := range mapping {
+		server.AddProcessors("GET", url, engines.BuildStaticHandlerForLocalResource(url, path))
 	}
 
 	/////////////////////

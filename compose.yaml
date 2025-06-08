@@ -9,8 +9,7 @@ services:
       - ./static/:/app/static/
     environment:
       - POSTGRESQL_URL=postgres://postgres:popo@postgres:5432/capi
-      - CACHE_URL=redis://redis:6379/0 
-      - REDIS_URL=redis://redis:6379/1
+      # - REDIS_URL=redis://redis:6379/1
     depends_on:
       - postgres
       - redis

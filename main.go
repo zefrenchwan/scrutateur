@@ -1,8 +1,6 @@
 package main
 
 import (
-	"io"
-	"log"
 	"os"
 	"time"
 
@@ -14,17 +12,12 @@ import (
 func main() {
 	logPath := "logs/server.log"
 
+	///////////////////
 	// Init log system
-	var logFile io.Writer
-	os.Remove(logPath)
-	if file, err := os.Create(logPath); err != nil {
-		panic(err)
-	} else {
-		logFile = io.MultiWriter(file)
-	}
+	logger := engines.NewLogger(logPath)
 
-	logger := log.New(logFile, "", log.Ldate|log.Ltime|log.Llongfile)
-
+	////////////////////////
+	// Launch storage system
 	options := storage.DaoOptions{PostgresqlURL: os.Getenv("POSTGRESQL_URL"), RedisURL: os.Getenv("REDIS_URL")}
 	// Create DAO
 	var dao storage.Dao
@@ -36,6 +29,7 @@ func main() {
 
 	defer dao.Close()
 
+	///////////////////////////////
 	// define web serving and links
 	engine := services.Init(dao, engines.NewLongSecret(), 24*time.Hour)
 	logger.Println("Starting engine")

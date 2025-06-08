@@ -19,7 +19,7 @@ COPY static/ /app/static/
 RUN CGO_ENABLED=0 GOOS=linux go build -o /app/main
 
 RUN mkdir /app/logs/
-RUN chmod -R 444 /app/static/ 
+RUN chmod -R 444 /app/static/
 
 # Run
 CMD ["/app/main"]

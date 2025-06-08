@@ -64,9 +64,12 @@ func main() {
 	// to put as final content
 	fmt.Println()
 	fmt.Println("RELEASE NOTES")
+	connectionStart = time.Now()
 	if body, err := clients.LoadStaticContent("changelog.txt"); err != nil {
 		panic(err)
 	} else {
 		fmt.Println(string(body))
+		fmt.Println()
+		fmt.Println("Loaded constant file (took ", time.Since(connectionStart), ")")
 	}
 }
