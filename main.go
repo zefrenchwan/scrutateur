@@ -31,7 +31,13 @@ func main() {
 
 	///////////////////////////////
 	// define web serving and links
-	engine := services.Init(dao, engines.NewLongSecret(), 24*time.Hour)
+
+	secret := os.Getenv("ENGINE_SECRET")
+	if secret == "" {
+		secret = engines.NewLongSecret()
+	}
+
+	engine := services.Init(dao, secret, 24*time.Hour)
 	logger.Println("Starting engine")
 	// start engine
 	engine.Launch(":3000")

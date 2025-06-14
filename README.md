@@ -3,6 +3,11 @@ Backend server to deal with patterns.
 
 ## Installation 
 
+Important variables to set are:
+* ENGINE_SECRET: secret to secure auth content. If not set, a secret will be generated 
+* REDIS_URL: redis url to use a cache. If not set, no redis cache
+* POSTGRESQL_URL: postgres url to use a relational database. MANDATORY
+
 ### Configure options
 
 If you add `REDIS_URL` as an environment variable, then you may use a redis cache in your code. 
