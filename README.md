@@ -57,6 +57,7 @@ Any failure in that part means a feature at least is not available.
 #### Self group: actions from current user to current user 
 * **/self/user/whoami/** displays user name if auth is valid and role allows it
 * **/self/user/password** changes current user's password
+* **/self/groups/list** display current groups user is in, and their auth
 
 #### Management operations on users
 

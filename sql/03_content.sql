@@ -11,6 +11,7 @@ insert into auth.roles(role_name, role_description) values ('reader','read only 
 -----------------------------------------------------------
 -- self group: display user info
 call auth.add_resource(ARRAY['reader','editor','admin','root']::text[],'EQUALS','/self/user/whoami','self');
+call auth.add_resource(ARRAY['admin','editor','reader','root']::text[],'EQUALS','/self/groups/list','self');
 call auth.add_resource(ARRAY['reader','editor','admin','root']::text[],'EQUALS','/self/user/password','self');
 -- management group: create, delete or manage access for user
 call auth.add_resource(ARRAY['admin','root']::text[],'EQUALS','/manage/user/create','management');

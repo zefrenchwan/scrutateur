@@ -75,6 +75,50 @@ func (d *DbStorage) CreateUsersGroup(ctx context.Context, login, name string, sh
 	return err
 }
 
+// ListUserGroupsForSpecificUser returns the groups an user is in
+func (d *DbStorage) ListUserGroupsForSpecificUser(ctx context.Context, login string) (map[string][]dto.GrantRole, error) {
+	var result map[string][]dto.GrantRole
+	if rows, err := d.db.Query(ctx, "select group_name, granter, admin , inviter from orgs.get_groups_for_user($1) ", login); err != nil {
+		return result, err
+	} else if rows == nil {
+		return result, nil
+	} else {
+		defer rows.Close()
+
+		result := make(map[string][]dto.GrantRole)
+		for rows.Next() {
+			if rows.Err() != nil {
+				return result, err
+			}
+
+			var name string
+			var granter, admin, inviter bool
+			if err := rows.Scan(&name, &granter, &admin, &inviter); err != nil {
+				return result, err
+			} else {
+				var roles []dto.GrantRole
+				roles = append(roles, dto.RoleReader)
+
+				if granter {
+					roles = append(roles, dto.RoleRoot)
+				}
+
+				if admin {
+					roles = append(roles, dto.RoleAdmin)
+				}
+
+				if inviter {
+					roles = append(roles, dto.RoleEditor)
+				}
+
+				result[name] = roles
+			}
+		}
+
+		return result, nil
+	}
+}
+
 // DeleteUsersGroup just deletes a group of users
 func (d *DbStorage) DeleteUsersGroup(ctx context.Context, name string) error {
 	_, err := d.db.Exec(ctx, "call orgs.delete_group($1)", name)

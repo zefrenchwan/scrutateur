@@ -26,6 +26,16 @@ from orgs.groups G
 join orgs.memberships M on M.group_id = G.group_id
 join auth.users U on U.user_id = M.user_id;
 
+-- orgs.get_groups_for_user returns the available groups for an user
+create or replace function orgs.get_groups_for_user(p_user_login text) returns table(group_name text, granter bool, admin bool, inviter bool) language plpgsql as $$
+declare 
+begin 
+    return query 
+        select G.group_name, G.granting as granter, G.administrating as admin, G.inviting as inviter
+        from orgs.v_group_and_member G
+        where G.user_login = p_user_login;
+end;$$;
+
 -- orgs.add_group adds a group created by that user, with initial access rights for that user
 create or replace procedure orgs.add_group(p_creator text, p_name text, p_grant bool, p_admin bool, p_invite bool) language plpgsql as $$
 declare 

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 )
 
 const CONNECTION_BASE = "http://localhost:3000/"
@@ -93,6 +94,47 @@ func (c *ClientSession) GetUsername() (string, error) {
 func (c *ClientSession) SetUserPassword(password string) error {
 	_, err := c.callEndpoint("POST", CONNECTION_BASE+"self/user/password", password)
 	return err
+}
+
+// GetCurrentUserGroups lists current groups and roles for user
+func (c *ClientSession) GetCurrentUserGroups() (map[string][]string, error) {
+	var body any
+	if resp, err := c.callEndpoint("GET", CONNECTION_BASE+"self/groups/list", ""); err != nil {
+		return nil, err
+	} else if regexp.MustCompile(`\A\s*\z`).MatchString(resp) {
+		return nil, nil
+	} else if err := json.Unmarshal([]byte(resp), &body); err != nil {
+		return nil, err
+	}
+
+	result := make(map[string][]string)
+	// parse result as a map[string][]string
+	if m, ok := body.(map[string]any); !ok {
+		return nil, errors.New("invalid input, not a map")
+	} else if len(m) == 0 {
+		return nil, nil
+	} else {
+		for name, v := range m {
+			var groupRoles []string
+			if values, ok := v.([]any); !ok {
+				return nil, errors.New("invalid input,value is not a slice")
+			} else if len(values) == 0 {
+				return nil, errors.New("invalid input, no role for group")
+			} else {
+				for _, val := range values {
+					if role, ok := val.(string); !ok {
+						return nil, errors.New("invalid input, role is not a string")
+					} else {
+						groupRoles = append(groupRoles, role)
+					}
+				}
+
+				result[name] = groupRoles
+			}
+		}
+	}
+
+	return result, nil
 }
 
 // AddUser is an admin task that adds an user with that username and password.

@@ -77,6 +77,12 @@ func validateUsersGroups(session clients.ClientSession) {
 		panic(err)
 	}
 
+	if values, err := session.GetCurrentUserGroups(); err != nil {
+		panic(err)
+	} else {
+		fmt.Println("Current user groups:", values)
+	}
+
 	if err := session.DeleteGroupOfUsers("developers"); err != nil {
 		panic(err)
 	}

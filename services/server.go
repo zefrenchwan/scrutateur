@@ -50,6 +50,7 @@ func Init(dao storage.Dao, secret string, tokenDuration time.Duration) engines.P
 	//////////////////////////////////////////////////////////////////////////////
 	server.AddProcessors("GET", "/self/user/whoami", connectionMiddleware, roleValidationMiddleware, endpointUserInformation)
 	server.AddProcessors("POST", "/self/user/password", connectionMiddleware, roleValidationMiddleware, engines.EndpointChangePassword)
+	server.AddProcessors("GET", "/self/groups/list", connectionMiddleware, roleValidationMiddleware, endpointListGroupsForUser)
 
 	/////////////////////////////////////////////
 	// GROUP MANAGEMENT: DEAL WITH USER ACCESS //

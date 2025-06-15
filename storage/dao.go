@@ -56,6 +56,11 @@ func (d *Dao) CreateUsersGroup(ctx context.Context, login, groupName string, sha
 	return d.rdb.CreateUsersGroup(ctx, login, groupName, share, admin, invite)
 }
 
+// ListUserGroupsForSpecificUser returns the groups an user is in
+func (d *Dao) ListUserGroupsForSpecificUser(ctx context.Context, login string) (map[string][]dto.GrantRole, error) {
+	return d.rdb.ListUserGroupsForSpecificUser(ctx, login)
+}
+
 // DeleteUsersGroup just deletes a group of users
 func (d *Dao) DeleteUsersGroup(ctx context.Context, name string) error {
 	return d.rdb.DeleteUsersGroup(ctx, name)

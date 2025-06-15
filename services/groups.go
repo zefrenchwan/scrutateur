@@ -42,6 +42,29 @@ func endpointCreateGroup(c *engines.HandlerContext) error {
 	}
 }
 
+// endpointListGroupsForUser displays groups an user is in, with access rights
+func endpointListGroupsForUser(c *engines.HandlerContext) error {
+	login := c.GetLogin()
+	if login == "" {
+		c.Build(http.StatusUnauthorized, "no active user", nil)
+		return nil
+	}
+
+	if values, err := c.Dao.ListUserGroupsForSpecificUser(context.Background(), login); err != nil {
+		c.BuildError(http.StatusInternalServerError, err, nil)
+		return nil
+	} else if len(values) == 0 {
+		c.Build(http.StatusNoContent, "", nil)
+		return nil
+	} else if err := c.BuildJson(http.StatusOK, values, c.RequestHeaderByNames("Authorization")); err != nil {
+		c.ClearResponse()
+		c.BuildError(http.StatusInternalServerError, err, nil)
+		return nil
+	} else {
+		return nil
+	}
+}
+
 // endpointDeleteGroup deletes a group by name
 func endpointDeleteGroup(c *engines.HandlerContext) error {
 	name := c.GetQueryParameters()["groupName"]
