@@ -7,14 +7,11 @@ import (
 	"github.com/zefrenchwan/scrutateur.git/clients/clients"
 )
 
-func main() {
-	currentPassword := "root"
-	connectionStart := time.Now()
-	session, errConnection := clients.Connect("root", currentPassword)
-	if errConnection != nil {
-		panic(errConnection)
-	}
+const USER_PASSWORD = "root"
 
+// prove basic features (connection, user management)
+func validateUserAuthSystem(session clients.ClientSession) {
+	connectionStart := time.Now()
 	identity, errDetails := session.GetUsername()
 	if errDetails != nil {
 		panic(errDetails)
@@ -30,7 +27,7 @@ func main() {
 	newPassword := "popo"
 	if err := session.SetUserPassword(newPassword); err != nil {
 		panic(err)
-	} else if err := session.SetUserPassword(currentPassword); err != nil {
+	} else if err := session.SetUserPassword(USER_PASSWORD); err != nil {
 		panic(err)
 	} else {
 		fmt.Println("Changed password twice (took ", time.Since(connectionStart), ")")
@@ -72,4 +69,27 @@ func main() {
 		fmt.Println()
 		fmt.Println("Loaded constant file (took ", time.Since(connectionStart), ")")
 	}
+}
+
+func validateUsersGroups(session clients.ClientSession) {
+	connectionStart := time.Now()
+	if err := session.CreateGroupOfUsers("developers"); err != nil {
+		panic(err)
+	}
+
+	if err := session.DeleteGroupOfUsers("developers"); err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Created and deleted group (took ", time.Since(connectionStart), ")")
+}
+
+func main() {
+	session, errConnection := clients.Connect("root", USER_PASSWORD)
+	if errConnection != nil {
+		panic(errConnection)
+	}
+
+	validateUserAuthSystem(session)
+	validateUsersGroups(session)
 }

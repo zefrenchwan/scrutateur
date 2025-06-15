@@ -35,7 +35,7 @@ func BuildLoginHandler(secret string, tokenDuration time.Duration) RequestProces
 
 // EndpointChangePassword changes current user's password
 func EndpointChangePassword(c *HandlerContext) error {
-	if login := c.GetContextValueAsString("login"); login == "" {
+	if login := c.GetLogin(); login == "" {
 		c.Build(http.StatusInternalServerError, "no user found", nil)
 	} else if password, err := c.RequestBodyAsString(); err != nil {
 		c.BuildError(http.StatusInternalServerError, err, nil)

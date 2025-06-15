@@ -37,7 +37,7 @@ func EndpointRootDeleteUser(c *HandlerContext) error {
 		c.Build(http.StatusBadRequest, "missing username for user deletion", headers)
 	} else if !ValidateUsernameFormat(username) {
 		c.Build(http.StatusForbidden, "invalid username format", nil)
-	} else if currentUser := c.GetContextValueAsString("login"); currentUser == "" {
+	} else if currentUser := c.GetLogin(); currentUser == "" {
 		c.Build(http.StatusInternalServerError, "cannot find user", nil)
 	} else if currentUser == username {
 		c.Build(http.StatusBadRequest, "cannot delete your own account", nil)
@@ -79,7 +79,7 @@ func EndpointAdminEditUserRoles(c *HandlerContext) error {
 		c.Build(http.StatusBadRequest, "missing username for user roles information", nil)
 	} else if !ValidateUsernameFormat(username) {
 		c.Build(http.StatusForbidden, "invalid username format", nil)
-	} else if actor := c.GetContextValueAsString("login"); actor == "" {
+	} else if actor := c.GetLogin(); actor == "" {
 		c.Build(http.StatusInternalServerError, "cannot access login from current content", nil)
 	} else if actorAccess, err := c.Dao.GetUserGrantAccessPerGroup(context.Background(), actor); err != nil {
 		c.BuildError(http.StatusInternalServerError, err, nil)

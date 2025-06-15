@@ -171,3 +171,23 @@ func (c *ClientSession) SetUserRolesForGroups(username string, access map[string
 
 	return nil
 }
+
+// CreateGroupOfUsers creates a group and add current user in that group
+func (c *ClientSession) CreateGroupOfUsers(groupName string) error {
+	message, err := c.callEndpoint("PUT", CONNECTION_BASE+"groups/create/"+groupName, "")
+	if err != nil {
+		fmt.Println("ERROR: " + message)
+	}
+
+	return err
+}
+
+// DeleteGroupOfUsers deletes a group by name
+func (c *ClientSession) DeleteGroupOfUsers(groupName string) error {
+	message, err := c.callEndpoint("DELETE", CONNECTION_BASE+"groups/delete/"+groupName, "")
+	if err != nil {
+		fmt.Println("ERROR: " + message)
+	}
+
+	return err
+}

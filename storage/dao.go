@@ -45,6 +45,22 @@ func (d *Dao) Close() {
 	}
 }
 
+// LogEvent logs an event on the events schema
+func (d *Dao) LogEvent(ctx context.Context, login, actionType, actionDescription string, parameters []string) error {
+	return d.rdb.LogEvent(ctx, login, actionType, actionDescription, parameters)
+}
+
+// CreateUsersGroup creates a group of users.
+// Login is the user that created the group, and that user has access rights to set
+func (d *Dao) CreateUsersGroup(ctx context.Context, login, groupName string, share, admin, invite bool) error {
+	return d.rdb.CreateUsersGroup(ctx, login, groupName, share, admin, invite)
+}
+
+// DeleteUsersGroup just deletes a group of users
+func (d *Dao) DeleteUsersGroup(ctx context.Context, name string) error {
+	return d.rdb.DeleteUsersGroup(ctx, name)
+}
+
 // ValidateUser returns true if login and password are a valid user auth info.
 func (d *Dao) ValidateUser(ctx context.Context, login string, password string) (bool, error) {
 	if resp, err := d.rdb.ValidateUser(ctx, login, password); err != nil {
@@ -69,9 +85,9 @@ func (d *Dao) GetValue(context context.Context, key string) (string, error) {
 	}
 }
 
-// GetGroups returns all the resources group names (ordered by name)
-func (d *Dao) GetGroups(ctx context.Context) ([]string, error) {
-	if resp, err := d.rdb.GetGroups(ctx); err != nil {
+// GetGroupsOfResources returns all the resources group names (ordered by name)
+func (d *Dao) GetGroupsOfResources(ctx context.Context) ([]string, error) {
+	if resp, err := d.rdb.GetGroupsOfResources(ctx); err != nil {
 		d.logger.Println("DAO: ERROR", err)
 		return nil, err
 	} else {

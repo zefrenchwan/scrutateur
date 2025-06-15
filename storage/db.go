@@ -63,6 +63,24 @@ func DatabaseConfiguration(url string) *pgxpool.Config {
 	return dbConfig
 }
 
+// LogEvent logs an event on the events schema
+func (d *DbStorage) LogEvent(ctx context.Context, login, actionType, actionDescription string, parameters []string) error {
+	_, err := d.db.Exec(ctx, "call evt.log_action($1, $2, $3, $4)", login, actionType, actionDescription, parameters)
+	return err
+}
+
+// CreateUsersGroup creates a group of users, from that login, with initial auth
+func (d *DbStorage) CreateUsersGroup(ctx context.Context, login, name string, share, admin, invite bool) error {
+	_, err := d.db.Exec(ctx, "call orgs.add_group($1,$2,$3,$4,$5)", login, name, share, admin, invite)
+	return err
+}
+
+// DeleteUsersGroup just deletes a group of users
+func (d *DbStorage) DeleteUsersGroup(ctx context.Context, name string) error {
+	_, err := d.db.Exec(ctx, "call orgs.delete_group($1)", name)
+	return err
+}
+
 // ValidateUser returns true if login and password are a valid user auth info.
 func (d *DbStorage) ValidateUser(ctx context.Context, login string, password string) (bool, error) {
 	var result bool
@@ -74,8 +92,8 @@ func (d *DbStorage) ValidateUser(ctx context.Context, login string, password str
 	}
 }
 
-// GetGroups returns all the resources group names
-func (d *DbStorage) GetGroups(ctx context.Context) ([]string, error) {
+// GetGroupsOfResources returns all the resources group names
+func (d *DbStorage) GetGroupsOfResources(ctx context.Context) ([]string, error) {
 	var result []string
 	if rows, err := d.db.Query(ctx, "select distinct group_name from auth.resources order by group_name asc"); err != nil {
 		return result, err

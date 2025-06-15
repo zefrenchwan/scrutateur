@@ -4,15 +4,22 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/zefrenchwan/scrutateur.git/dto"
 	"github.com/zefrenchwan/scrutateur.git/storage"
 )
 
 // HandlerContextKey is necessary as a key type for context handling
 type HandlerContextKey string
 
+// ProcessingAuth defines the auth content for now
+type ProcessingAuth struct {
+	Login string
+	Roles []dto.GrantRole
+}
+
 // HandlerContext is the context to pass on each request, for the processor to get everything
 type HandlerContext struct {
-	// go context, a map[string]any was not enough due to dao
+	// go context
 	context context.Context
 	// decorated request (to ease request use)
 	request RequestDecorator
@@ -20,6 +27,8 @@ type HandlerContext struct {
 	response AbstractResponse
 	// design choice: include dao in here, we don't build a general engine, we want custom use
 	Dao storage.Dao
+	// current auth content as structured data (no "any" stuff)
+	CurrentAuth ProcessingAuth
 }
 
 // GetCurrentContext returns the current context
@@ -57,28 +66,29 @@ func (c *HandlerContext) RequestBodyAsString() (string, error) {
 	return c.request.GetBodyAsString()
 }
 
-// SetContextValue sets value within inner context
-func (c *HandlerContext) SetContextValue(key HandlerContextKey, value any) {
-	if c.context == nil {
-		c.context = context.Background()
-	}
-
-	c.context = context.WithValue(c.context, key, value)
+// IsAuthDefined returns true if login is set and we know who's asking
+func (c *HandlerContext) IsAuthDefined() bool {
+	return c.CurrentAuth.Login != ""
 }
 
-// GetContextValue gets value or nil for no value
-func (c *HandlerContext) GetContextValue(key string) any {
-	return c.context.Value(key)
+// SetLogin registers this user login for that request
+func (c *HandlerContext) SetLogin(value string) {
+	c.CurrentAuth.Login = value
 }
 
-// GetContextValueAsString gets value or empty for no value or no match
-func (c *HandlerContext) GetContextValueAsString(key HandlerContextKey) string {
-	value := c.context.Value(key)
-	if result, ok := value.(string); ok {
-		return result
-	} else {
-		return ""
-	}
+// GetLogin returns the current login
+func (c *HandlerContext) GetLogin() string {
+	return c.CurrentAuth.Login
+}
+
+// GetRoles returns the current roles for that query to process
+func (c *HandlerContext) GetRoles() []dto.GrantRole {
+	return c.CurrentAuth.Roles
+}
+
+// SetRoles sets the role for that query to process
+func (c *HandlerContext) SetRoles(roles []dto.GrantRole) {
+	c.CurrentAuth.Roles = roles
 }
 
 // SetResponseHeader adds an header with that key and that value

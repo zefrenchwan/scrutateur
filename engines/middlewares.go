@@ -43,7 +43,7 @@ func AuthenticationMiddleware(secret string, tokenDuration time.Duration) Reques
 			return nil
 		} else {
 			c.SetResponseHeader("Authorization", "Bearer "+newToken)
-			c.SetContextValue("login", token.Username)
+			c.SetLogin(token.Username)
 			return nil
 		}
 	}
@@ -53,7 +53,7 @@ func AuthenticationMiddleware(secret string, tokenDuration time.Duration) Reques
 func RolesBasedMiddleware() RequestProcessor {
 	// this function tests the token, test session and then sets main headers
 	return func(c *HandlerContext) error {
-		if login := c.GetContextValueAsString("login"); login == "" {
+		if login := c.GetLogin(); login == "" {
 			c.Build(http.StatusInternalServerError, "no user found", nil)
 		} else if conditions, err := c.Dao.GetUserGrantedAccess(context.Background(), login); err != nil {
 			c.BuildError(http.StatusInternalServerError, err, nil)
@@ -63,8 +63,10 @@ func RolesBasedMiddleware() RequestProcessor {
 				c.BuildError(http.StatusInternalServerError, err, nil)
 			} else if !accept {
 				c.Build(http.StatusUnauthorized, "cannot access resource due to missing permissions", nil)
+			} else if len(roles) == 0 {
+				c.Build(http.StatusUnauthorized, "no role set for resource", nil)
 			} else {
-				c.SetContextValue("roles", roles)
+				c.SetRoles(roles)
 			}
 		}
 
