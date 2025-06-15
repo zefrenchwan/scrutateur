@@ -65,6 +65,11 @@ Any failure in that part means a feature at least is not available.
 * **/manage/user/{username}/access/list** displays groups and matching roles for a given user
 * **/manage/user/{username}/access/edit** changes groups and matching roles for a given user
 
+#### Group of users operations
+
+* **/groups/create/{groupName}** creates a group (needs edition, admin or root)
+* **/groups/delete/{groupName}** deletes a group (needs admin or root)
+
 ### Security
 
 This project is not intented to run on production as is. 
@@ -83,6 +88,7 @@ Available operations so far:
 * add user (needs admin role) and delete user (root only)
 * display roles for user (admin) and change roles on groups (admin for admin, editor or reader, root for all roles)
 * load resources by name (needs no auth)
+* create or delete groups
 
 ## Architecture
 
