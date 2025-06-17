@@ -107,6 +107,12 @@ func (d *DbStorage) GetGroupAuthForUser(ctx context.Context, login, group string
 	}
 }
 
+// SetGroupAuthForUser sets auth within a group for a given user, granted by a creator
+func (d *DbStorage) SetGroupAuthForUser(ctx context.Context, creator, user, group string, roles []dto.GrantRole) error {
+	_, err := d.db.Exec(ctx, "call orgs.set_user_access_into_group($1,$2,$3,$4)", creator, user, group, roles)
+	return err
+}
+
 // ListUserGroupsForSpecificUser returns the groups an user is in
 func (d *DbStorage) ListUserGroupsForSpecificUser(ctx context.Context, login string) (map[string][]dto.GrantRole, error) {
 	var result map[string][]dto.GrantRole

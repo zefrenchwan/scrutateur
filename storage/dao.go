@@ -66,6 +66,11 @@ func (d *Dao) GetGroupAuthForUser(ctx context.Context, login, group string) ([]d
 	return d.rdb.GetGroupAuthForUser(ctx, login, group)
 }
 
+// SetGroupAuthForUser sets auth within a group for a given user, granted by a creator
+func (d *Dao) SetGroupAuthForUser(ctx context.Context, creator, user, group string, roles []dto.GrantRole) error {
+	return d.rdb.SetGroupAuthForUser(ctx, creator, user, group, roles)
+}
+
 // DeleteUsersGroup just deletes a group of users
 func (d *Dao) DeleteUsersGroup(ctx context.Context, name string) error {
 	return d.rdb.DeleteUsersGroup(ctx, name)

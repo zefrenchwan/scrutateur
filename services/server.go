@@ -63,7 +63,8 @@ func Init(dao storage.Dao, secret string, tokenDuration time.Duration) engines.P
 	//////////////////////////////////////////////////////////////////////////////////
 	// GROUP ORGANIZATIONS: DEAL WITH GROUP OF USERS AS IN USERS WANTING TO REGROUP //
 	//////////////////////////////////////////////////////////////////////////////////
-	server.AddProcessors("PUT", "/groups/create/{groupName}", connectionMiddleware, roleValidationMiddleware, endpointCreateGroup)
+	server.AddProcessors("POST", "/groups/create/{groupName}", connectionMiddleware, roleValidationMiddleware, endpointCreateGroup)
+	server.AddProcessors("PUT", "/groups/{groupName}/upsert/users", connectionMiddleware, roleValidationMiddleware, endpointUpsertUsersInGroup)
 	server.AddProcessors("DELETE", "/groups/delete/{groupName}", connectionMiddleware, roleValidationMiddleware, endpointDeleteGroup)
 
 	////////////////////////////////

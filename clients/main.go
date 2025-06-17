@@ -71,23 +71,29 @@ func validateUserAuthSystem(session clients.ClientSession) {
 	}
 }
 
+// prove basic features for user groups
 func validateUsersGroups(session clients.ClientSession) {
 	connectionStart := time.Now()
 	if err := session.CreateGroupOfUsers("developers"); err != nil {
 		panic(err)
-	}
-
-	if values, err := session.GetCurrentUserGroups(); err != nil {
+	} else if values, err := session.GetCurrentUserGroups(); err != nil {
 		panic(err)
 	} else {
 		fmt.Println("Current user groups:", values)
 	}
 
-	if err := session.DeleteGroupOfUsers("developers"); err != nil {
+	// insert an user and invite him
+	userRoles := map[string][]string{"other": {"editor", "reader"}}
+	if err := session.AddUser("other", "password"); err != nil {
+		panic(err)
+	} else if err := session.UpsertUsersInGroup("developers", userRoles); err != nil {
+		panic(err)
+	} else if err := session.DeleteGroupOfUsers("developers"); err != nil {
 		panic(err)
 	}
 
-	fmt.Println("Created and deleted group (took ", time.Since(connectionStart), ")")
+	fmt.Println("Created, invited someone and deleted group (took ", time.Since(connectionStart), ")")
+
 }
 
 func main() {

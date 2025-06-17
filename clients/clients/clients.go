@@ -216,12 +216,24 @@ func (c *ClientSession) SetUserRolesForGroups(username string, access map[string
 
 // CreateGroupOfUsers creates a group and add current user in that group
 func (c *ClientSession) CreateGroupOfUsers(groupName string) error {
-	message, err := c.callEndpoint("PUT", CONNECTION_BASE+"groups/create/"+groupName, "")
+	message, err := c.callEndpoint("POST", CONNECTION_BASE+"groups/create/"+groupName, "")
 	if err != nil {
 		fmt.Println("ERROR: " + message)
 	}
 
 	return err
+}
+
+// UpsertUsersInGroup changes users roles in a group (or add them in the group)
+func (c *ClientSession) UpsertUsersInGroup(groupName string, users map[string][]string) error {
+	if body, err := json.Marshal(users); err != nil {
+		return err
+	} else if message, err := c.callEndpoint("PUT", CONNECTION_BASE+"groups/"+groupName+"/upsert/users", string(body)); err != nil {
+		fmt.Println("ERROR: " + message)
+		return err
+	}
+
+	return nil
 }
 
 // DeleteGroupOfUsers deletes a group by name
