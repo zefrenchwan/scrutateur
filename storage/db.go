@@ -70,15 +70,47 @@ func (d *DbStorage) LogEvent(ctx context.Context, login, actionType, actionDescr
 }
 
 // CreateUsersGroup creates a group of users, from that login, with initial auth
-func (d *DbStorage) CreateUsersGroup(ctx context.Context, login, name string, share, admin, invite bool) error {
-	_, err := d.db.Exec(ctx, "call orgs.add_group($1,$2,$3,$4,$5)", login, name, share, admin, invite)
+func (d *DbStorage) CreateUsersGroup(ctx context.Context, login, name string, roles []dto.GrantRole) error {
+	_, err := d.db.Exec(ctx, "call orgs.add_group($1,$2,$3)", login, name, roles)
 	return err
+}
+
+// GetGroupAuthForUser returns, for a specific group and user, user's auth (if any)
+func (d *DbStorage) GetGroupAuthForUser(ctx context.Context, login, group string) ([]dto.GrantRole, error) {
+	var result []dto.GrantRole
+	if rows, err := d.db.Query(ctx, "select local_roles from orgs.get_groups_for_user($1) where group_name = $2", login, group); err != nil {
+		return result, err
+	} else if rows == nil {
+		return result, nil
+	} else {
+		defer rows.Close()
+
+		for rows.Next() {
+			if rows.Err() != nil {
+				return result, err
+			}
+
+			var roles []string
+			if err := rows.Scan(&roles); err != nil {
+				return result, err
+			} else if len(roles) == 0 {
+				return result, nil
+			} else if res, err := dto.ParseGrantRoles(roles); err != nil {
+				return result, nil
+			} else {
+				result = res
+				return result, nil
+			}
+		}
+
+		return result, nil
+	}
 }
 
 // ListUserGroupsForSpecificUser returns the groups an user is in
 func (d *DbStorage) ListUserGroupsForSpecificUser(ctx context.Context, login string) (map[string][]dto.GrantRole, error) {
 	var result map[string][]dto.GrantRole
-	if rows, err := d.db.Query(ctx, "select group_name, granter, admin , inviter from orgs.get_groups_for_user($1) ", login); err != nil {
+	if rows, err := d.db.Query(ctx, "select group_name, local_roles from orgs.get_groups_for_user($1) ", login); err != nil {
 		return result, err
 	} else if rows == nil {
 		return result, nil
@@ -92,25 +124,12 @@ func (d *DbStorage) ListUserGroupsForSpecificUser(ctx context.Context, login str
 			}
 
 			var name string
-			var granter, admin, inviter bool
-			if err := rows.Scan(&name, &granter, &admin, &inviter); err != nil {
+			var values []string
+			if err := rows.Scan(&name, &values); err != nil {
+				return result, err
+			} else if roles, err := dto.ParseGrantRoles(values); err != nil {
 				return result, err
 			} else {
-				var roles []dto.GrantRole
-				roles = append(roles, dto.RoleReader)
-
-				if granter {
-					roles = append(roles, dto.RoleRoot)
-				}
-
-				if admin {
-					roles = append(roles, dto.RoleAdmin)
-				}
-
-				if inviter {
-					roles = append(roles, dto.RoleEditor)
-				}
-
 				result[name] = roles
 			}
 		}

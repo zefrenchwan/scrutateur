@@ -52,13 +52,18 @@ func (d *Dao) LogEvent(ctx context.Context, login, actionType, actionDescription
 
 // CreateUsersGroup creates a group of users.
 // Login is the user that created the group, and that user has access rights to set
-func (d *Dao) CreateUsersGroup(ctx context.Context, login, groupName string, share, admin, invite bool) error {
-	return d.rdb.CreateUsersGroup(ctx, login, groupName, share, admin, invite)
+func (d *Dao) CreateUsersGroup(ctx context.Context, login, groupName string, roles []dto.GrantRole) error {
+	return d.rdb.CreateUsersGroup(ctx, login, groupName, roles)
 }
 
 // ListUserGroupsForSpecificUser returns the groups an user is in
 func (d *Dao) ListUserGroupsForSpecificUser(ctx context.Context, login string) (map[string][]dto.GrantRole, error) {
 	return d.rdb.ListUserGroupsForSpecificUser(ctx, login)
+}
+
+// GetGroupAuthForUser returns, for a specific group and user, user's auth (if any)
+func (d *Dao) GetGroupAuthForUser(ctx context.Context, login, group string) ([]dto.GrantRole, error) {
+	return d.rdb.GetGroupAuthForUser(ctx, login, group)
 }
 
 // DeleteUsersGroup just deletes a group of users

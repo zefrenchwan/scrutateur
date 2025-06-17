@@ -19,6 +19,6 @@ call auth.add_resource(ARRAY['root']::text[],'MATCHES','/manage/user/*/delete','
 call auth.add_resource(ARRAY['admin','root']::text[],'MATCHES','/manage/user/*/access/list','management');
 call auth.add_resource(ARRAY['admin','root']::text[],'MATCHES','/manage/user/*/access/edit','management');
 -- orgs group: create, delete or manage groups of users 
-call auth.add_resource(ARRAY['admin','editor','root']::text[],'MATCHES','/groups/create/*','groups');
+call auth.add_resource(ARRAY['admin','root']::text[],'MATCHES','/groups/create/*','groups');
 call auth.add_resource(ARRAY['admin','root']::text[],'MATCHES','/groups/delete/*','groups');
 --------------------------------------------------------

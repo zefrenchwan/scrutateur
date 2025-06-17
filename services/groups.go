@@ -22,17 +22,10 @@ func endpointCreateGroup(c *engines.HandlerContext) error {
 	}
 
 	creator := c.GetLogin()
-	roles := c.GetRoles()
+	groupRoles := append([]dto.GrantRole{dto.RoleReader, dto.RoleEditor}, c.GetRoles()...)
+	groupRoles = slices.Compact(groupRoles)
 
-	grantable := slices.ContainsFunc(roles, func(r dto.GrantRole) bool { return r == dto.RoleRoot })
-	admin := slices.ContainsFunc(roles, func(r dto.GrantRole) bool { return r == dto.RoleAdmin })
-	invite := slices.ContainsFunc(roles, func(r dto.GrantRole) bool { return r == dto.RoleEditor })
-	if !invite && !admin && !grantable {
-		c.Build(http.StatusUnauthorized, "not enough auth to create group", nil)
-		return nil
-	}
-
-	if err := c.Dao.CreateUsersGroup(context.Background(), creator, name, grantable, admin, invite); err != nil {
+	if err := c.Dao.CreateUsersGroup(context.Background(), creator, name, groupRoles); err != nil {
 		c.BuildError(http.StatusInternalServerError, err, nil)
 		return nil
 	} else {
@@ -73,6 +66,17 @@ func endpointDeleteGroup(c *engines.HandlerContext) error {
 		return nil
 	} else if !ValidateGroupNameFormat(name) {
 		c.Build(http.StatusBadRequest, "group parameter does not match valid group name rules", nil)
+		return nil
+	}
+
+	mandatoryRoles := []dto.GrantRole{dto.RoleAdmin, dto.RoleRoot}
+	// global role is necessary to perform that action.
+	// But user may have local access rights to consider too
+	if localRoles, err := c.Dao.GetGroupAuthForUser(c.GetCurrentContext(), c.GetLogin(), name); err != nil {
+		c.BuildError(http.StatusInternalServerError, err, nil)
+		return nil
+	} else if !HasMinimumAccessAuth(c.GetRoles(), localRoles, mandatoryRoles) {
+		c.Build(http.StatusUnauthorized, "insufficient role or group auth", nil)
 		return nil
 	}
 

@@ -21,7 +21,7 @@ func ValidateQueryProcessor(requestMethod string) RequestProcessor {
 
 // AuthenticationMiddleware builds a middleware to deal with auth
 func AuthenticationMiddleware(secret string, tokenDuration time.Duration) RequestProcessor {
-	// this function tests the token, test session and then sets main headers
+	// this function tests the token and then sets main headers
 	return func(c *HandlerContext) error {
 		// get the bearer and token as a whole reading the header
 		tokenString := c.GetRequestHeaderFirstValue("Authorization")
@@ -51,7 +51,6 @@ func AuthenticationMiddleware(secret string, tokenDuration time.Duration) Reques
 
 // RolesBasedMiddleware tests if user may access this page or not, based on roles based conditions in database
 func RolesBasedMiddleware() RequestProcessor {
-	// this function tests the token, test session and then sets main headers
 	return func(c *HandlerContext) error {
 		if login := c.GetLogin(); login == "" {
 			c.Build(http.StatusInternalServerError, "no user found", nil)

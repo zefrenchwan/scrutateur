@@ -68,7 +68,7 @@ Any failure in that part means a feature at least is not available.
 
 #### Group of users operations
 
-* **/groups/create/{groupName}** creates a group (needs edition, admin or root)
+* **/groups/create/{groupName}** creates a group (needs admin or root)
 * **/groups/delete/{groupName}** deletes a group (needs admin or root)
 
 ### Security
