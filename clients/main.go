@@ -83,10 +83,10 @@ func validateUsersGroups(session clients.ClientSession) {
 	}
 
 	// insert an user and invite him
-	userRoles := map[string][]string{"other": {"editor", "reader"}}
+	userRoles := []string{"editor", "reader"}
 	if err := session.AddUser("other", "password"); err != nil {
 		panic(err)
-	} else if err := session.UpsertUsersInGroup("developers", userRoles); err != nil {
+	} else if err := session.UpsertUserInGroup("other", "developers", userRoles); err != nil {
 		panic(err)
 	} else if err := session.DeleteGroupOfUsers("developers"); err != nil {
 		panic(err)

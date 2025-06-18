@@ -80,6 +80,25 @@ begin
 
 end;$$;
 
+-- orgs.revoke_user_in_group excludes an user within a group
+create or replace procedure orgs.revoke_user_in_group(p_user text, p_name text) language plpgsql as $$
+declare 
+    l_user_id int;
+    l_group_id uuid;
+begin 
+
+    select user_id into l_user_id from auth.users where user_login = p_user;
+    if l_user_id is null then 
+        raise exception 'no user matching %', p_user;
+    end if;
+    select group_id into l_group_id from orgs.groups where group_name = p_name; 
+    if l_group_id is null then 
+        raise exception 'group % does not exist', p_name;
+    end if;
+
+    delete from orgs.memberships where group_id = l_group_id and user_id = l_user_id; 
+end;$$;
+
 -- orgs.delete_group just deletes a group of users
 create or replace procedure orgs.delete_group(p_name text) language plpgsql as $$
 declare 

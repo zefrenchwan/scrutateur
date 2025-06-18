@@ -224,11 +224,11 @@ func (c *ClientSession) CreateGroupOfUsers(groupName string) error {
 	return err
 }
 
-// UpsertUsersInGroup changes users roles in a group (or add them in the group)
-func (c *ClientSession) UpsertUsersInGroup(groupName string, users map[string][]string) error {
-	if body, err := json.Marshal(users); err != nil {
+// UpsertUserInGroup changes user roles in a group (or add user in the group with those roles)
+func (c *ClientSession) UpsertUserInGroup(userName, groupName string, roles []string) error {
+	if body, err := json.Marshal(roles); err != nil {
 		return err
-	} else if message, err := c.callEndpoint("PUT", CONNECTION_BASE+"groups/"+groupName+"/upsert/users", string(body)); err != nil {
+	} else if message, err := c.callEndpoint("PUT", CONNECTION_BASE+"groups/"+groupName+"/upsert/user/"+userName, string(body)); err != nil {
 		fmt.Println("ERROR: " + message)
 		return err
 	}
