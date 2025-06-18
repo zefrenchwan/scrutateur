@@ -88,11 +88,13 @@ func validateUsersGroups(session clients.ClientSession) {
 		panic(err)
 	} else if err := session.UpsertUserInGroup("other", "developers", userRoles); err != nil {
 		panic(err)
+	} else if err := session.RevokeUserInGroup("other", "developers"); err != nil {
+		panic(err)
 	} else if err := session.DeleteGroupOfUsers("developers"); err != nil {
 		panic(err)
 	}
 
-	fmt.Println("Created, invited someone and deleted group (took ", time.Since(connectionStart), ")")
+	fmt.Println("Created, invited and revoked someone, then deleted group (took ", time.Since(connectionStart), ")")
 
 }
 

@@ -236,6 +236,16 @@ func (c *ClientSession) UpsertUserInGroup(userName, groupName string, roles []st
 	return nil
 }
 
+// RevokeUserInGroup revokes an user in a group
+func (c *ClientSession) RevokeUserInGroup(userName, groupName string) error {
+	if message, err := c.callEndpoint("DELETE", CONNECTION_BASE+"groups/"+groupName+"/revoke/user/"+userName, ""); err != nil {
+		fmt.Println("ERROR: " + message)
+		return err
+	}
+
+	return nil
+}
+
 // DeleteGroupOfUsers deletes a group by name
 func (c *ClientSession) DeleteGroupOfUsers(groupName string) error {
 	message, err := c.callEndpoint("DELETE", CONNECTION_BASE+"groups/delete/"+groupName, "")

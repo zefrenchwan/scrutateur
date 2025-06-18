@@ -71,6 +71,11 @@ func (d *Dao) SetGroupAuthForUser(ctx context.Context, creator, user, group stri
 	return d.rdb.SetGroupAuthForUser(ctx, creator, user, group, roles)
 }
 
+// RevokeUserInGroup removes an user in a group
+func (d *Dao) RevokeUserInGroup(ctx context.Context, user, group string) error {
+	return d.rdb.RevokeUserInGroup(ctx, user, group)
+}
+
 // DeleteUsersGroup just deletes a group of users
 func (d *Dao) DeleteUsersGroup(ctx context.Context, name string) error {
 	return d.rdb.DeleteUsersGroup(ctx, name)

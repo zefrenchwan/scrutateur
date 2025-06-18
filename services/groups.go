@@ -133,6 +133,12 @@ func endpointUpsertUserInGroup(c *engines.HandlerContext) error {
 		return nil
 	}
 
+	var paramRoles []string
+	for _, role := range request {
+		paramRoles = append(paramRoles, string(role))
+	}
+
+	c.Dao.LogEvent(c.GetCurrentContext(), login, "groups", fmt.Sprintf("user %s upserts user %s within group %s", login, userName, groupName), paramRoles)
 	c.Build(http.StatusOK, "", c.RequestHeaderByNames("Authorization"))
 	return nil
 }
@@ -161,8 +167,13 @@ func endpointRevokeUserInGroup(c *engines.HandlerContext) error {
 	} else if !HasMinimumAccessAuth(globalRoles, localRoles, expectedRoles) {
 		c.Build(http.StatusUnauthorized, "insufficient privileges to revoke user", nil)
 		return nil
+	} else if err := c.Dao.RevokeUserInGroup(c.GetCurrentContext(), userName, groupName); err != nil {
+		c.BuildError(http.StatusInternalServerError, errLoad, nil)
+		return nil
 	}
 
+	c.Dao.LogEvent(c.GetCurrentContext(), login, "groups", fmt.Sprintf("user %s removes user %s from group %s", login, userName, groupName), nil)
+	c.Build(http.StatusOK, "", c.RequestHeaderByNames("Authorization"))
 	return nil
 
 }

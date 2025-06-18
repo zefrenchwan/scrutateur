@@ -113,6 +113,12 @@ func (d *DbStorage) SetGroupAuthForUser(ctx context.Context, creator, user, grou
 	return err
 }
 
+// RevokeUserInGroup removes an user in a group
+func (d *DbStorage) RevokeUserInGroup(ctx context.Context, user, group string) error {
+	_, err := d.db.Exec(ctx, "call orgs.revoke_user_in_group($1,$2)", user, group)
+	return err
+}
+
 // ListUserGroupsForSpecificUser returns the groups an user is in
 func (d *DbStorage) ListUserGroupsForSpecificUser(ctx context.Context, login string) (map[string][]dto.GrantRole, error) {
 	var result map[string][]dto.GrantRole
