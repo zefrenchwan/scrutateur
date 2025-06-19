@@ -3,8 +3,8 @@ call auth.upsert_user_auth('root','root');
 
 
 -- grant root on any resource
-insert into auth.grants(user_id, role_id, group_name) 
-select distinct USR.user_id, RCO.role_id, RES.group_name  
+insert into auth.grants(user_id, role_id, feature_name) 
+select distinct USR.user_id, RCO.role_id, RES.feature_name  
 from  auth.users USR 
 cross join auth.roles RCO 
 cross join auth.resources RES 

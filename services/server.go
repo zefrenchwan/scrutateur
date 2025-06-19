@@ -60,9 +60,9 @@ func Init(dao storage.Dao, secret string, tokenDuration time.Duration) engines.P
 	server.AddProcessors("GET", "/manage/user/{username}/access/list", connectionMiddleware, roleValidationMiddleware, engines.EndpointAdminListUserRoles)
 	server.AddProcessors("PUT", "/manage/user/{username}/access/edit", connectionMiddleware, roleValidationMiddleware, engines.EndpointAdminEditUserRoles)
 
-	//////////////////////////////////////////////////////////////////////////////////
-	// GROUP ORGANIZATIONS: DEAL WITH GROUP OF USERS AS IN USERS WANTING TO REGROUP //
-	//////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	// GROUP "GROUPS": DEAL WITH GROUP OF USERS AS IN USERS WANTING TO REGROUP //
+	/////////////////////////////////////////////////////////////////////////////
 	server.AddProcessors("POST", "/groups/create/{groupName}", connectionMiddleware, roleValidationMiddleware, endpointCreateGroup)
 	server.AddProcessors("PUT", "/groups/{groupName}/upsert/user/{userName}", connectionMiddleware, roleValidationMiddleware, endpointUpsertUserInGroup)
 	server.AddProcessors("DELETE", "/groups/{groupName}/revoke/user/{userName}", connectionMiddleware, roleValidationMiddleware, endpointRevokeUserInGroup)

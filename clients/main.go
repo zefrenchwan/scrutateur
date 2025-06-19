@@ -42,7 +42,7 @@ func validateUserAuthSystem(session clients.ClientSession) {
 	var username = "other"
 	if err := session.AddUser(username, "secret"); err != nil {
 		panic(err)
-	} else if err := session.SetUserRolesForGroups(username, access); err != nil {
+	} else if err := session.SetUserRolesForFeatures(username, access); err != nil {
 		panic(err)
 	} else if values, err := session.GetUserRoles(username); err != nil {
 		panic(err)
@@ -82,7 +82,7 @@ func validateUsersGroups(session clients.ClientSession) {
 		fmt.Println("Current user groups:", values)
 	}
 
-	// insert an user and invite him
+	// insert an user and invite that user to a group
 	userRoles := []string{"editor", "reader"}
 	if err := session.AddUser("other", "password"); err != nil {
 		panic(err)
@@ -94,7 +94,7 @@ func validateUsersGroups(session clients.ClientSession) {
 		panic(err)
 	}
 
-	fmt.Println("Created, invited and revoked someone, then deleted group (took ", time.Since(connectionStart), ")")
+	fmt.Println("Created a group, invited and revoked someone, then deleted group (took ", time.Since(connectionStart), ")")
 
 }
 

@@ -196,8 +196,8 @@ func (c *ClientSession) GetUserRoles(username string) (map[string][]string, erro
 	return result, nil
 }
 
-// SetUserRolesForGroups changes user access for a given user to set those roles for those groups
-func (c *ClientSession) SetUserRolesForGroups(username string, access map[string][]string) error {
+// SetUserRolesForFeatures changes user access for a given user to set those roles for those features
+func (c *ClientSession) SetUserRolesForFeatures(username string, access map[string][]string) error {
 	path := fmt.Sprintf(CONNECTION_BASE+"manage/user/%s/access/edit", username)
 	if len(access) == 0 {
 		return errors.New("nil input not accepted")

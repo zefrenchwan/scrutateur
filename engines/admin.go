@@ -58,7 +58,7 @@ func EndpointAdminListUserRoles(c *HandlerContext) error {
 		c.Build(http.StatusBadRequest, "missing username for user roles information", nil)
 	} else if !ValidateUsernameFormat(username) {
 		c.Build(http.StatusForbidden, "invalid username format", nil)
-	} else if values, err := c.Dao.GetUserGrantAccessPerGroup(context.Background(), username); err != nil {
+	} else if values, err := c.Dao.GetUserRolesPerFeature(context.Background(), username); err != nil {
 		c.BuildError(http.StatusInternalServerError, err, nil)
 	} else if len(values) == 0 {
 		c.Build(http.StatusNotFound, fmt.Sprintf("no matching user for %s", username), nil)
@@ -81,7 +81,7 @@ func EndpointAdminEditUserRoles(c *HandlerContext) error {
 		c.Build(http.StatusForbidden, "invalid username format", nil)
 	} else if actor := c.GetLogin(); actor == "" {
 		c.Build(http.StatusInternalServerError, "cannot access login from current content", nil)
-	} else if actorAccess, err := c.Dao.GetUserGrantAccessPerGroup(context.Background(), actor); err != nil {
+	} else if actorAccess, err := c.Dao.GetUserRolesPerFeature(context.Background(), actor); err != nil {
 		c.BuildError(http.StatusInternalServerError, err, nil)
 	} else if err := c.BindJsonBody(&values); err != nil {
 		c.BuildError(http.StatusBadRequest, err, nil)
@@ -104,7 +104,7 @@ func EndpointAdminEditUserRoles(c *HandlerContext) error {
 
 		if err := MayGrant(actorAccess, parsedRequest); err != nil {
 			c.BuildError(http.StatusUnauthorized, err, nil)
-		} else if err := c.Dao.GrantAccess(context.Background(), username, parsedRequest); err != nil {
+		} else if err := c.Dao.GrantAccessToFeatures(context.Background(), username, parsedRequest); err != nil {
 			c.BuildError(http.StatusInternalServerError, err, nil)
 		} else {
 			c.Build(http.StatusOK, "", c.RequestHeaderByNames("Authorization"))

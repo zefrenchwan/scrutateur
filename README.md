@@ -69,6 +69,8 @@ Any failure in that part means a feature at least is not available.
 #### Group of users operations
 
 * **/groups/create/{groupName}** creates a group (needs admin or root)
+* **/groups/{groupName}/upsert/user/{userName}** invites or upserts auth for user in a group
+* **/groups/{groupName}/revoke/user/{userName}** exclude someone from a group
 * **/groups/delete/{groupName}** deletes a group (needs admin or root)
 
 ### Security

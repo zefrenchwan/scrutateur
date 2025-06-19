@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -168,9 +167,9 @@ func (d *DbStorage) ValidateUser(ctx context.Context, login string, password str
 }
 
 // GetGroupsOfResources returns all the resources group names
-func (d *DbStorage) GetGroupsOfResources(ctx context.Context) ([]string, error) {
+func (d *DbStorage) GetFeaturesSet(ctx context.Context) ([]string, error) {
 	var result []string
-	if rows, err := d.db.Query(ctx, "select distinct group_name from auth.resources order by group_name asc"); err != nil {
+	if rows, err := d.db.Query(ctx, "select distinct feature_name from auth.resources order by feature_name asc"); err != nil {
 		return result, err
 	} else if rows == nil {
 		return result, nil
@@ -242,10 +241,10 @@ func (d DbStorage) DeleteUser(ctx context.Context, username string) error {
 	return err
 }
 
-// GetUserGrantAccessPerGroup returns, for each resources group, all roles for that group that the user was granted
-func (d DbStorage) GetUserGrantAccessPerGroup(ctx context.Context, username string) (map[string][]dto.GrantRole, error) {
+// GetUserRolesPerFeature returns, for each resources group, all roles for that group that the user was granted
+func (d DbStorage) GetUserRolesPerFeature(ctx context.Context, username string) (map[string][]dto.GrantRole, error) {
 	result := make(map[string][]dto.GrantRole)
-	if rows, err := d.db.Query(ctx, "select group_name, roles from auth.get_groups_auths_for_user($1)", username); err != nil {
+	if rows, err := d.db.Query(ctx, "select feature_name, roles from auth.get_roles_features_for_user($1)", username); err != nil {
 		return result, err
 	} else if rows == nil {
 		return result, nil
@@ -257,14 +256,14 @@ func (d DbStorage) GetUserGrantAccessPerGroup(ctx context.Context, username stri
 				return result, err
 			}
 
-			var group string
+			var feature string
 			roles := []string{}
-			if err := rows.Scan(&group, &roles); err != nil {
+			if err := rows.Scan(&feature, &roles); err != nil {
 				return result, err
 			} else if parsedRoles, err := dto.ParseGrantRoles(roles); err != nil {
 				return result, err
 			} else {
-				result[group] = parsedRoles
+				result[feature] = parsedRoles
 			}
 		}
 	}
@@ -272,22 +271,8 @@ func (d DbStorage) GetUserGrantAccessPerGroup(ctx context.Context, username stri
 	return result, nil
 }
 
-// GrantAccessToGroupOfResources sets roles for user to that group of resources
-func (d DbStorage) GrantAccessToGroupOfResources(ctx context.Context, username string, roles []dto.GrantRole, group string) error {
-	if len(roles) == 0 {
-		return fmt.Errorf("no role for that grant request")
-	}
-
-	mapping := make([]string, len(roles))
-	for index, value := range roles {
-		mapping[index] = string(value)
-	}
-
-	_, err := d.db.Exec(ctx, "call  auth.grant_group_access_to_user($1,$2,$3)", username, mapping, group)
-	return err
-}
-
-func (d DbStorage) GrantAccessBatch(ctx context.Context, username string, access map[string][]dto.GrantRole) error {
+// GrantAccessToFeatures upserts access auth for features as a map of name and roles
+func (d DbStorage) GrantAccessToFeatures(ctx context.Context, username string, access map[string][]dto.GrantRole) error {
 	if transaction, err := d.db.Begin(ctx); err != nil {
 		return err
 	} else {
@@ -299,12 +284,12 @@ func (d DbStorage) GrantAccessBatch(ctx context.Context, username string, access
 					mapping[index] = string(value)
 				}
 
-				if _, err := d.db.Exec(ctx, "call  auth.grant_group_access_to_user($1,$2,$3)", username, mapping, group); err != nil {
+				if _, err := d.db.Exec(ctx, "call  auth.grant_feature_access($1,$2,$3)", username, mapping, group); err != nil {
 					transaction.Rollback(ctx)
 					return err
 				}
 
-			} else if _, err := transaction.Exec(ctx, "call auth.remove_access_from_group_to_user($1,$2)", username, group); err != nil {
+			} else if _, err := transaction.Exec(ctx, "call auth.remove_feature_access_to_user($1,$2)", username, group); err != nil {
 				transaction.Rollback(ctx)
 				return err
 			}
@@ -318,8 +303,8 @@ func (d DbStorage) GrantAccessBatch(ctx context.Context, username string, access
 	return nil
 }
 
-// RemoveAccessToGroupOfResources removes access rights for that user to a given group of resources
-func (d DbStorage) RemoveAccessToGroupOfResources(ctx context.Context, username string, group string) error {
-	_, err := d.db.Exec(ctx, "call auth.remove_access_from_group_to_user($1,$2)", username, group)
+// RemoveAccessToFeature removes access rights for that user to a given group of resources
+func (d DbStorage) RemoveAccessToFeature(ctx context.Context, username string, group string) error {
+	_, err := d.db.Exec(ctx, "call auth.remove_feature_access_to_user($1,$2)", username, group)
 	return err
 }

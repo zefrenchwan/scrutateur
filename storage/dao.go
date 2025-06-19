@@ -105,9 +105,9 @@ func (d *Dao) GetValue(context context.Context, key string) (string, error) {
 	}
 }
 
-// GetGroupsOfResources returns all the resources group names (ordered by name)
-func (d *Dao) GetGroupsOfResources(ctx context.Context) ([]string, error) {
-	if resp, err := d.rdb.GetGroupsOfResources(ctx); err != nil {
+// GetFeaturesSet returns all the resources group names (ordered by name)
+func (d *Dao) GetFeaturesSet(ctx context.Context) ([]string, error) {
+	if resp, err := d.rdb.GetFeaturesSet(ctx); err != nil {
 		d.logger.Println("DAO: ERROR", err)
 		return nil, err
 	} else {
@@ -125,9 +125,9 @@ func (d *Dao) GetUserGrantedAccess(context context.Context, user string) ([]dto.
 	}
 }
 
-// GetUserGrantAccessPerGroup returns, for each resources group, all roles for that group that the user was granted
-func (d *Dao) GetUserGrantAccessPerGroup(ctx context.Context, username string) (map[string][]dto.GrantRole, error) {
-	if resp, err := d.rdb.GetUserGrantAccessPerGroup(ctx, username); err != nil {
+// GetUserRolesPerFeature returns, for each resources group, all roles for that group that the user was granted
+func (d *Dao) GetUserRolesPerFeature(ctx context.Context, username string) (map[string][]dto.GrantRole, error) {
+	if resp, err := d.rdb.GetUserRolesPerFeature(ctx, username); err != nil {
 		d.logger.Println("DAO: ERROR", err)
 		return nil, err
 	} else {
@@ -155,23 +155,11 @@ func (d *Dao) DeleteUser(ctx context.Context, username string) error {
 	}
 }
 
-// GrantAccessToGroupOfResources sets roles for user to that group of resources
-func (d *Dao) GrantAccessToGroupOfResources(ctx context.Context, username string, roles []dto.GrantRole, group string) error {
-	if len(roles) == 0 {
-		return fmt.Errorf("to grant access, one role at least is necessary")
-	} else if err := d.rdb.GrantAccessToGroupOfResources(ctx, username, roles, group); err != nil {
-		d.logger.Println("DAO: ERROR", err)
-		return err
-	} else {
-		return err
-	}
-}
-
-// GrantAccess sets access on groups for a given user.
+// GrantAccessToFeatures sets access on groups for a given user.
 // The access parameter is a map of groups (should exist) and values are the roles to set.
 // Note that roles are the only roles set (no append)
-func (d *Dao) GrantAccess(ctx context.Context, username string, access map[string][]dto.GrantRole) error {
-	if err := d.rdb.GrantAccessBatch(ctx, username, access); err != nil {
+func (d *Dao) GrantAccessToFeatures(ctx context.Context, username string, access map[string][]dto.GrantRole) error {
+	if err := d.rdb.GrantAccessToFeatures(ctx, username, access); err != nil {
 		d.logger.Println("DAO: ERROR", err)
 		return err
 	} else {
@@ -179,9 +167,9 @@ func (d *Dao) GrantAccess(ctx context.Context, username string, access map[strin
 	}
 }
 
-// RemoveAccessToGroupOfResources removes access rights for that user to a given group of resources
-func (d *Dao) RemoveAccessToGroupOfResources(ctx context.Context, username string, group string) error {
-	if err := d.rdb.RemoveAccessToGroupOfResources(ctx, username, group); err != nil {
+// RemoveAccessToFeature removes access rights for that user to a given group of resources
+func (d *Dao) RemoveAccessToFeature(ctx context.Context, username string, group string) error {
+	if err := d.rdb.RemoveAccessToFeature(ctx, username, group); err != nil {
 		d.logger.Println("DAO: ERROR", err)
 		return err
 	} else {

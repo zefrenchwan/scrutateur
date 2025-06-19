@@ -44,7 +44,7 @@ create table auth.resources (
     resource_id serial primary key, 
     operator text not null default 'EQUALS' check(operator = ANY('{EQUALS,STARTS_WITH,CONTAINS,MATCHES}'::text[])),
     template_url text not null,
-    group_name text not null
+    feature_name text not null
 );
 
 -- given a resource, get the role it needs to access it
@@ -63,37 +63,46 @@ with resources_agg_auth as (
     join auth.roles ROL on ROL.role_id = AUT.role_id
     group by RES.resource_id
 ) 
-select RES.operator, RES.template_url, RES.group_name, RAA.needed_roles
+select RES.operator, RES.template_url, RES.feature_name, RAA.needed_roles
 from auth.resources RES
 join resources_agg_auth RAA on RAA.resource_id = RES.resource_id;
 
 
--- grant a role for a user on a group of resources
+-- grant a role for a user on a feature
 create table auth.grants (
     user_id int not null references auth.users(user_id),
     role_id int not null references auth.roles(role_id),
-    group_name text not null
+    feature_name text not null
 );
 
 -- auth.v_granted_resources gets login of user, resource operator, template and then roles the user has on this resource 
 create view auth.v_granted_resources as
 with granted_roles as (
-    select USR.user_id, GRA.group_name, array_agg(distinct ROL.role_name::text) as user_roles
+    select USR.user_id, GRA.feature_name, array_agg(distinct ROL.role_name::text) as user_roles
     from auth.users USR 
     join auth.grants GRA on GRA.user_id = USR.user_id 
     join auth.roles ROL on ROL.role_id = GRA.role_id  
-    group by USR.user_id, GRA.group_name
+    group by USR.user_id, GRA.feature_name
 ), resources_auths as (
-    select AUT.resource_id, RES.group_name, array_agg(distinct ROL.role_name::text) as expected_roles
+    select AUT.resource_id, RES.feature_name, array_agg(distinct ROL.role_name::text) as expected_roles
     from auth.authorizations AUT 
     join auth.resources RES on RES.resource_id = AUT.resource_id
     join auth.roles ROL on ROL.role_id = AUT.role_id 
-    group by AUT.resource_id, RES.group_name
+    group by AUT.resource_id, RES.feature_name
 )
 select distinct USR.user_login, RES.operator, RES.template_url, auth.array_intersection(GRO.user_roles, RAU.expected_roles) as roles
 from auth.users USR 
 join granted_roles GRO on GRO.user_id = USR.user_id 
-join resources_auths RAU on RAU.group_name = GRO.group_name 
+join resources_auths RAU on RAU.feature_name = GRO.feature_name 
 join auth.resources RES on RES.resource_id = RAU.resource_id
 where GRO.user_roles && RAU.expected_roles;
 
+---------------------------------------------------------
+-- ROLES DEFINITION: needs code refactoring if changed --
+---------------------------------------------------------
+
+-- add roles (constants, needs code refactoring for a change)
+insert into auth.roles(role_name, role_description) values ('root','allows any action with grant actions too');
+insert into auth.roles(role_name, role_description) values ('admin','allows any action but cannot grant');
+insert into auth.roles(role_name, role_description) values ('editor','crud operations are allowed');
+insert into auth.roles(role_name, role_description) values ('reader','read only operations are allowed');

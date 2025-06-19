@@ -35,15 +35,15 @@ begin
 end; $$;
 
 
--- auth.add_resource adds a resource in a group and expicits roles to access it
-create or replace procedure auth.add_resource(p_roles text[], p_operator text, p_template text, p_group text) language plpgsql as $$
+-- auth.add_resource adds a resource in a feature and expicits roles to access it
+create or replace procedure auth.add_resource(p_roles text[], p_operator text, p_template text, p_feature text) language plpgsql as $$
 declare 
     l_role text; 
     l_role_id int = -1;
     l_resource_id int;
 begin 
 
-    insert into auth.resources(operator,template_url,group_name) values (p_operator, p_template, p_group) returning resource_id into l_resource_id;
+    insert into auth.resources(operator,template_url,feature_name) values (p_operator, p_template, p_feature) returning resource_id into l_resource_id;
 
     foreach l_role in array p_roles loop 
         select role_id into l_role_id from auth.roles where role_name = l_role;
@@ -55,9 +55,9 @@ begin
     end loop;
 end;$$;
 
--- auth.grant_group_access_to_user sets role for that group of resources for that user. 
+-- auth.grant_feature_access sets role for that feature and user. 
 -- NOTE THAT: it does not append, it sets. Previous grant values are deleted
-create or replace procedure auth.grant_group_access_to_user(p_user text, p_roles text[], p_group text) language plpgsql as $$
+create or replace procedure auth.grant_feature_access(p_user text, p_roles text[], p_feature text) language plpgsql as $$
 declare 
     l_user_id int = -1;
     l_role_id int = -1;
@@ -69,7 +69,7 @@ begin
         raise exception 'no user found with login %', p_user;
     end if;
 
-    delete from auth.grants where user_id = l_user_id and group_name = p_group;
+    delete from auth.grants where user_id = l_user_id and feature_name = p_feature;
 
     foreach l_role in array p_roles loop 
         select role_id into l_role_id from auth.roles where role_name = l_role;
@@ -77,13 +77,13 @@ begin
             raise exception 'no matching role for %', l_role;
         end if;
 
-        insert into auth.grants(user_id, role_id, group_name) values (l_user_id, l_role_id, p_group);
+        insert into auth.grants(user_id, role_id, feature_name) values (l_user_id, l_role_id, p_feature);
     end loop;
 
 end;$$;
 
--- auth.remove_access_from_group_to_user removes all access to a group of resources for that user
-create or replace procedure auth.remove_access_from_group_to_user(p_user text, p_group text) language plpgsql as $$
+-- auth.remove_feature_access_to_user removes all access to a feature for that user
+create or replace procedure auth.remove_feature_access_to_user(p_user text, p_feature text) language plpgsql as $$
 declare 
     l_user_id int;
 begin 
@@ -91,7 +91,7 @@ begin
     select user_id into l_user_id from auth.users where user_login = p_user;
 
     if l_user_id is not null and l_user_id > 0 then 
-        delete from auth.grants where user_id = l_user_id and group_name = p_group;
+        delete from auth.grants where user_id = l_user_id and feature_name = p_feature;
     end if;
 
 end;$$;
@@ -111,14 +111,14 @@ begin
         where VGR.user_login = p_user ;
 end;$$;
 
--- Given an user (per login), gets all groups and grant access for that users
-create or replace function auth.get_groups_auths_for_user(p_user text) returns table(group_name text, roles text[]) language plpgsql as $$
+-- Given an user (per login), gets all features and grant access for that users
+create or replace function auth.get_roles_features_for_user(p_user text) returns table(feature_name text, roles text[]) language plpgsql as $$
 begin
     return query 
-        select GRA.group_name, array_agg(distinct ROL.role_name::text) as roles
+        select GRA.feature_name, array_agg(distinct ROL.role_name::text) as roles
         from auth.users USR 
         join auth.grants GRA on GRA.user_id = USR.user_id 
         join auth.roles ROL on ROL.role_id = GRA.role_id
         where USR.user_login = p_user
-        group by GRA.group_name;
+        group by GRA.feature_name;
 end;$$;
