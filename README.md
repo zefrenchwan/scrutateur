@@ -119,7 +119,7 @@ Hence, roles are:
 4. reader: can see non critical content
 
 
-Then, resources are grouped into functions by name. 
+Then, resources are grouped into features by name. 
 It depends on your configuration, but for instance: admin/create-user, admin/delete-user are basic admin operations forming a group of admin actions. 
 Resources need some authorizations for users to connect to. 
 For instance, admin/... expect admin or even root users. 

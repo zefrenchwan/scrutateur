@@ -1,11 +1,7 @@
 # Copyright zefrenchwan, 2025
 # MIT license 
 
-0.1.2 (dev)
-    groups of users
-0.1.1 (current)
-    static file management
-0.1.0 
-    independant processing
-v 0.0.9 
-    roles
+0.1.0 (current): groups of users
+0.0.9:           static file management
+0.0.8:           independant processing
+v 0.0.7:         roles
