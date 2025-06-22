@@ -5,13 +5,7 @@ Backend server to deal with patterns.
 
 Important variables to set are:
 * ENGINE_SECRET: secret to secure auth content. If not set, a secret will be generated 
-* REDIS_URL: redis url to use a cache. If not set, no redis cache
 * POSTGRESQL_URL: postgres url to use a relational database. MANDATORY
-
-### Configure options
-
-If you add `REDIS_URL` as an environment variable, then you may use a redis cache in your code. 
-Otherwise, code will only use a relational database (mandatory). 
 
 ### With docker compose 
 start docker instances with compose: `docker compose -f 'compose.yaml' up -d --build`
@@ -30,7 +24,7 @@ Hello root (took  32.0662ms )
 ```
 
 
-Any failure in that part means a feature at least is not available.
+Any failure in that part means a feature, at least, is not available.
 
 ### Steps before pushing to production 
 
@@ -96,8 +90,7 @@ Available operations so far:
 ## Architecture
 
 1. endpoints are either unprotected (login and status) or protected (with an auth check mechanism and access to pages are based on roles)
-2. Storage for auth is based on a relational database. 
-3. Although not used, a redis cache is provided and may be set to active via a configuration mode
+2. Storage for auth is based on a relational database, and for some files, on a local FS
 
 ### Dependencies
 

@@ -18,7 +18,7 @@ func main() {
 
 	////////////////////////
 	// Launch storage system
-	options := storage.DaoOptions{PostgresqlURL: os.Getenv("POSTGRESQL_URL"), RedisURL: os.Getenv("REDIS_URL")}
+	options := storage.DaoOptions{PostgresqlURL: os.Getenv("POSTGRESQL_URL")}
 	// Create DAO
 	var dao storage.Dao
 	if db, err := storage.NewDao(options, logger); err != nil {

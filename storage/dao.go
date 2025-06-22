@@ -8,15 +8,14 @@ import (
 	"github.com/zefrenchwan/scrutateur.git/dto"
 )
 
+// DaoOptions hides decorated systems
 type DaoOptions struct {
-	RedisURL      string
 	PostgresqlURL string
 }
 
-// Dao decorates any storage system (relational, cache, etc)
+// Dao deals with operations such as roles, users, groups, etc
 type Dao struct {
 	rdb    DbStorage
-	cache  CacheStorage
 	logger *log.Logger
 }
 
@@ -27,13 +26,8 @@ func NewDao(options DaoOptions, logger *log.Logger) (Dao, error) {
 		return dao, fmt.Errorf("missing postgres configuration")
 	} else if db, err := NewDbStorage(options.PostgresqlURL); err != nil {
 		return dao, err
-	} else if len(options.RedisURL) == 0 {
-		logger.Println("REDIS CACHE INACTIVE. Dao will only manage relational database")
-		return Dao{rdb: db, logger: logger}, nil
-	} else if cacheClient, err := NewCacheStorage(options.RedisURL); err != nil {
-		return dao, err
 	} else {
-		return Dao{rdb: db, cache: cacheClient, logger: logger}, nil
+		return Dao{rdb: db, logger: logger}, nil
 	}
 }
 
@@ -41,7 +35,6 @@ func NewDao(options DaoOptions, logger *log.Logger) (Dao, error) {
 func (d *Dao) Close() {
 	if d != nil {
 		d.rdb.Close()
-		d.cache.Close()
 	}
 }
 
@@ -88,20 +81,6 @@ func (d *Dao) ValidateUser(ctx context.Context, login string, password string) (
 		return false, err
 	} else {
 		return resp, err
-	}
-}
-
-// SetValue sets value in a cache
-func (d *Dao) SetValue(context context.Context, key, value string) error {
-	return d.cache.SetValue(context, key, []byte(value))
-}
-
-// GetValue gets value by key in a cache
-func (d *Dao) GetValue(context context.Context, key string) (string, error) {
-	if rawContent, err := d.cache.GetValue(context, key); err != nil {
-		return "", err
-	} else {
-		return string(rawContent), nil
 	}
 }
 
