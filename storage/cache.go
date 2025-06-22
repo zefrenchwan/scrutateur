@@ -35,9 +35,13 @@ func (c *CacheStorage) SetValue(context context.Context, key string, value []byt
 }
 
 // Has returns true if the key is stored in the cache
-func (c *CacheStorage) Has(ctx context.Context, key string) bool {
+func (c *CacheStorage) Has(ctx context.Context, key string) (bool, error) {
 	cmd, err := c.client.Exists(ctx, key).Result()
-	return err != nil || cmd == 0
+	if err != nil {
+		return false, err
+	}
+
+	return cmd == 1, nil
 }
 
 // GetValue gets value by key from a cache
@@ -47,6 +51,15 @@ func (c *CacheStorage) GetValue(context context.Context, key string) ([]byte, er
 	} else {
 		return result.Bytes()
 	}
+}
+
+// Delete a value in a cache by key
+func (c *CacheStorage) Delete(context context.Context, key string) error {
+	if result := c.client.Del(context, key); result.Err() != nil {
+		return result.Err()
+	}
+
+	return nil
 }
 
 // Close closes the connection to the cache
