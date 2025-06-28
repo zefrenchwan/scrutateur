@@ -67,12 +67,20 @@ Any failure in that part means a feature, at least, is not available.
 * **/groups/{groupName}/revoke/user/{userName}** exclude someone from a group
 * **/groups/delete/{groupName}** deletes a group (needs admin or root)
 
+#### Audit group: operations to display events (logged as important) such as "this user did this action "
+
+* **/audits/display?from=...&to=...** displays actions that were logged (from and to are optional)(root only)
+
 ### Security
 
 This project is not intented to run on production as is. 
 Code deals with basic security (roles, input validation, jwt) but was neither audited or approved by a security expert.  
 Known weak points are secrets protection (no salt) and default user mechanism (root configuration by default). 
 **Adapt my code for your context, contact your administrator or security expert before pushing any of this code to production**
+
+
+Additionally, all important actions are logged. 
+It is then possible to display said actions, but not to change them. 
 
 
 ### Client
