@@ -66,6 +66,11 @@ func (c *HandlerContext) RequestBodyAsString() (string, error) {
 	return c.request.GetBodyAsString()
 }
 
+// RequestUrlParameters returns the URL parameters as a map of string and related values
+func (c *HandlerContext) RequestUrlParameters() map[string][]string {
+	return c.request.GetUrlParameters()
+}
+
 // IsAuthDefined returns true if login is set and we know who's asking
 func (c *HandlerContext) IsAuthDefined() bool {
 	return c.CurrentAuth.Login != ""

@@ -83,6 +83,19 @@ func (r *RequestDecorator) GetQueryParameters() map[string]string {
 	return result
 }
 
+// GetUrlParameters returns URL parameters as a map of key, values.
+// For instance: test?a=b will return a => [b]
+func (r *RequestDecorator) GetUrlParameters() map[string][]string {
+	result := make(map[string][]string)
+	for k, v := range r.request.URL.Query() {
+		values := make([]string, len(v))
+		copy(values, v)
+		result[k] = values
+	}
+
+	return result
+}
+
 // GetBodyAsString returns the request body as a string
 func (r *RequestDecorator) GetBodyAsString() (string, error) {
 	var content string

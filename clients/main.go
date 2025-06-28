@@ -95,7 +95,20 @@ func validateUsersGroups(session clients.ClientSession) {
 	}
 
 	fmt.Println("Created a group, invited and revoked someone, then deleted group (took ", time.Since(connectionStart), ")")
+	fmt.Println()
 
+	// display audit logs
+	var empty time.Time
+	connectionStart = time.Now()
+	if value, err := session.Audit(empty, time.Now()); err != nil {
+		fmt.Println(value)
+		panic(err)
+	} else {
+		fmt.Println("AUDIT LOGS")
+		fmt.Println(value)
+		fmt.Println("Audit display took ", time.Since(connectionStart))
+		fmt.Println()
+	}
 }
 
 func main() {

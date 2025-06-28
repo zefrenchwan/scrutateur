@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"time"
 )
 
 const CONNECTION_BASE = "http://localhost:3000/"
@@ -254,4 +255,35 @@ func (c *ClientSession) DeleteGroupOfUsers(groupName string) error {
 	}
 
 	return err
+}
+
+// Audit displays audit logs between two moments
+func (c *ClientSession) Audit(from, to time.Time) (string, error) {
+	url := CONNECTION_BASE + "audits/display"
+	var empty time.Time
+	var counter int
+	if empty.Compare(from) < 0 {
+		url = url + "?from=" + from.Format("20060102")
+		counter = 1
+	}
+
+	if to.Compare(empty) > 0 {
+		if counter != 0 {
+			url = url + "&to="
+		} else {
+			url = url + "?to="
+		}
+
+		url = url + to.Format("20060102")
+		counter = counter + 1
+	}
+
+	// for two dates, test if they make sense
+	if counter >= 2 {
+		if from.Compare(to) > 0 {
+			return "", errors.New("period of time is invalid")
+		}
+	}
+
+	return c.callEndpoint("GET", url, "")
 }

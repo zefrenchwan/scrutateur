@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/zefrenchwan/scrutateur.git/dto"
 )
@@ -40,7 +41,17 @@ func (d *Dao) Close() {
 
 // LogEvent logs an event on the events schema
 func (d *Dao) LogEvent(ctx context.Context, login, actionType, actionDescription string, parameters []string) error {
-	return d.rdb.LogEvent(ctx, login, actionType, actionDescription, parameters)
+	if err := d.rdb.LogEvent(ctx, login, actionType, actionDescription, parameters); err != nil {
+		d.logger.Printf("FAILED TO LOG AUDIT EVENT: %s \n", err.Error())
+		return err
+	}
+
+	return nil
+}
+
+// LoadAuditEvents gets the events between two dates
+func (d *Dao) LoadAuditEvents(ctx context.Context, from, to time.Time) ([]dto.AuditEntryLog, error) {
+	return d.rdb.LoadAuditEvents(ctx, from, to)
 }
 
 // CreateUsersGroup creates a group of users.

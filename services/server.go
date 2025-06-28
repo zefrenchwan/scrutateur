@@ -52,6 +52,11 @@ func Init(dao storage.Dao, secret string, tokenDuration time.Duration) engines.P
 	server.AddProcessors("POST", "/self/user/password", connectionMiddleware, roleValidationMiddleware, engines.EndpointChangePassword)
 	server.AddProcessors("GET", "/self/groups/list", connectionMiddleware, roleValidationMiddleware, endpointListGroupsForUser)
 
+	/////////////////////////////////////////////////////////////
+	// GROUP AUDIT: PRINT ACTIONS FOR SPECIAL USERS TO ANALYZE //
+	/////////////////////////////////////////////////////////////
+	server.AddProcessors("GET", "/audits/display", connectionMiddleware, roleValidationMiddleware, engines.EndpointRootAuditLogs)
+
 	/////////////////////////////////////////////
 	// GROUP MANAGEMENT: DEAL WITH USER ACCESS //
 	/////////////////////////////////////////////

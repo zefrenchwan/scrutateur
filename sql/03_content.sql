@@ -15,4 +15,6 @@ call auth.add_resource(ARRAY['admin','root']::text[],'MATCHES','/groups/create/*
 call auth.add_resource(ARRAY['editor', 'admin','root']::text[],'MATCHES','/groups/*/upsert/user/*','groups');
 call auth.add_resource(ARRAY['editor', 'admin','root']::text[],'MATCHES','/groups/*/revoke/user/*','groups');
 call auth.add_resource(ARRAY['admin','root']::text[],'MATCHES','/groups/delete/*','groups');
+-- audit group: display audit logs 
+call auth.add_resource(ARRAY['root']::text[],'MATCHES','/audits/display','audit');
 --------------------------------------------------------

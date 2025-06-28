@@ -68,6 +68,37 @@ func (d *DbStorage) LogEvent(ctx context.Context, login, actionType, actionDescr
 	return err
 }
 
+// LoadAuditEvents gets the events between two dates
+func (d *DbStorage) LoadAuditEvents(ctx context.Context, from, to time.Time) ([]dto.AuditEntryLog, error) {
+	const query = "select * from evt.actions where date_trunc('day', event_date) >= $1 and  date_trunc('day', event_date) <= $2 order by event_date asc"
+	var result []dto.AuditEntryLog
+	if rows, err := d.db.Query(ctx, query, from, to); err != nil {
+		return result, err
+	} else if rows == nil {
+		return result, nil
+	} else {
+		defer rows.Close()
+
+		for rows.Next() {
+			if rows.Err() != nil {
+				return result, err
+			}
+
+			var eventTime time.Time
+			var initiator, typeValue, description string
+			var params []string
+			if err := rows.Scan(&eventTime, &initiator, &typeValue, &description, &params); err != nil {
+				return result, err
+			} else {
+				value := dto.AuditEntryLog{EventDate: eventTime, EventInitiator: initiator, EventType: typeValue, EventDescription: description, EventParameters: params}
+				result = append(result, value)
+			}
+		}
+
+		return result, nil
+	}
+}
+
 // CreateUsersGroup creates a group of users, from that login, with initial auth
 func (d *DbStorage) CreateUsersGroup(ctx context.Context, login, name string, roles []dto.GrantRole) error {
 	_, err := d.db.Exec(ctx, "call orgs.add_group($1,$2,$3)", login, name, roles)

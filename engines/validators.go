@@ -24,3 +24,12 @@ func ValidateUserpasswordFormat(password string) bool {
 		return res
 	}
 }
+
+// ValidateDateFormat tests if dates provided by user are valid or not
+func ValidateDateFormat(input string) bool {
+	if res, err := regexp.MatchString(`^[0-9]{8}$`, input); err != nil {
+		panic(err)
+	} else {
+		return res
+	}
+}
